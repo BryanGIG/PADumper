@@ -1,7 +1,5 @@
 package com.dumper.android.messager
 
-
-import android.os.Build
 import android.os.Handler
 import android.os.Message
 import android.widget.Toast
@@ -10,6 +8,7 @@ import com.dumper.android.core.MainActivity
 import com.dumper.android.core.RootServices
 import com.dumper.android.dumper.process.ProcessData
 import com.dumper.android.ui.memory.MemoryFragment
+import com.dumper.android.utils.getParcelableArrayListCompact
 
 class MSGReceiver(private val activity: MainActivity) : Handler.Callback {
 
@@ -18,36 +17,17 @@ class MSGReceiver(private val activity: MainActivity) : Handler.Callback {
 
         when (message.what) {
             RootServices.MSG_GET_PROCESS_LIST -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    message.data.getParcelableArrayList(
-                        RootServices.LIST_ALL_PROCESS,
-                        ProcessData::class.java
-                    )
-                        ?.let {
+                message.data.getParcelableArrayListCompact<ProcessData>(RootServices.LIST_ALL_PROCESS)
+                    ?.let {
+                        val navHost = activity.binding.navHostFragmentActivityMain
+                        val navController = navHost.getFragment<NavHostFragment>()
+                        val fragments = navController.childFragmentManager.fragments
 
-                            val navController =
-                                activity.binding.navHostFragmentActivityMain.getFragment<NavHostFragment>()
-                            navController.childFragmentManager.fragments
-                                .find { it is MemoryFragment }
-                                ?.let { fragment ->
-                                    (fragment as MemoryFragment).showProcess(it)
-                                }
-
-                        }
-                } else {
-                    message.data.getParcelableArrayList<ProcessData>(RootServices.LIST_ALL_PROCESS)
-                        ?.let {
-
-                            val navController =
-                                activity.binding.navHostFragmentActivityMain.getFragment<NavHostFragment>()
-                            navController.childFragmentManager.fragments
-                                .find { it is MemoryFragment }
-                                ?.let { fragment ->
-                                    (fragment as MemoryFragment).showProcess(it)
-                                }
-
-                        }
-                }
+                        fragments.find { it is MemoryFragment }
+                            ?.let { fragment ->
+                                (fragment as MemoryFragment).showProcess(it)
+                            }
+                    }
             }
             RootServices.MSG_DUMP_PROCESS -> {
                 message.data.getString(RootServices.DUMP_LOG)?.let {
