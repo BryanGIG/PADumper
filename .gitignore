@@ -4,7 +4,6 @@
 /.idea/caches
 /.idea
 app/release
-app/keystore.jks
 /.idea/libraries
 /.idea/modules.xml
 /.idea/workspace.xml
