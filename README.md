@@ -1,13 +1,13 @@
-# PAD (Process Android Dumper)
-This dumper is made for il2cpp game but you can use it in any app you want
+# PADumper (Process Android Dumper)
+This dumper is made for dumping libil2cpp.so but you can use it to dump any ELF from an Android Process
 
 ## How To Use
 - Run the process
-- Open PADumper
+- Open [PADumper](https://github.com/BryanGIG/PADumper/releases)
 - Put process name manually or you can click `Select Apps` to select running apps
 - Put the ELF Name or you can leave it with default name `libil2cpp.so`
 
-- [**Optional**] UnCheck `Check flag address` if you want to skip check address permission (**r-xp**)
+- [**Optional**] Un-check `Check flag address` if you want to skip check address permission (**r-xp**)
 - [**Optional**] Check `Fix ELF` if you want fix the ELF
 - [**Optional**] Check `global-metadata.dat` if you want dump unity metadata from memory
 - Dump and wait until finish
