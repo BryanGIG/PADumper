@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">PADumper</string>
+    <string name="process_name">Process Name</string>
+    <string name="select_process">Select Apps</string>
+    <string name="elf_name">ELF Name</string>
+    <string name="dump_global_metadata_dat">global-metadata.dat</string>
+    <string name="fix_elf_result">Fix ELF</string>
+    <string name="dump">Dump</string>
+    <string name="github_repository">Github</string>
+    <string name="libil2cpp">libil2cpp.so</string>
+    <string name="memory">Memory</string>
+    <string name="console">Console</string>
+    <string name="check_flag_address">Check flag address</string>
+</resources>

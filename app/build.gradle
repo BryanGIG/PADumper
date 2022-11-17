@@ -1,0 +1,79 @@
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+    id 'kotlin-parcelize'
+}
+
+android {
+    compileSdk 33
+    namespace "com.dumper.android"
+
+    defaultConfig {
+        applicationId  "com.dumper.android"
+        minSdk 21
+        targetSdk 33
+        versionCode 1
+        versionName "0.0.1"
+    }
+
+    signingConfigs {
+        debug {
+            storeFile file("keystore.jks")
+            keyAlias "PADumper"
+            storePassword "012345"
+            keyPassword "012345"
+        }
+        release {
+            storeFile file("keystore.jks")
+            keyAlias "PADumper"
+            storePassword "012345"
+            keyPassword "012345"
+        }
+    }
+
+    buildTypes {
+        debug {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.debug
+        }
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+
+    buildFeatures {
+        viewBinding true
+    }
+
+    kotlinOptions {
+        jvmTarget = '11'
+    }
+
+}
+
+dependencies {
+    //Ui
+    implementation 'androidx.core:core-ktx:1.9.0'
+    implementation 'androidx.fragment:fragment-ktx:1.5.4'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.5.1'
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.5.1'
+    implementation 'com.google.android.material:material:1.7.0'
+    implementation "com.afollestad.material-dialogs:core:3.3.0"
+    implementation 'androidx.navigation:navigation-fragment:2.5.2'
+    implementation 'androidx.navigation:navigation-ui-ktx:2.5.2'
+
+    //Root
+    def libsuVersion = '5.0.3'
+    implementation "com.github.topjohnwu.libsu:core:${libsuVersion}"
+    implementation "com.github.topjohnwu.libsu:service:${libsuVersion}"
+}
