@@ -19,7 +19,7 @@ class Dumper(private val pkg: String) {
      * @param flagCheck if `true` the dumped file will be checked for flags/
      * @return log of the dump
      */
-    fun dumpFile(autoFix: Boolean, flagCheck: Boolean): String {
+    fun dumpFile(autoFix: Boolean, is32Bit: Boolean, flagCheck: Boolean): String {
         val log = StringBuilder()
         try {
             mem.pid = getProcessID() ?: throw Exception("Process not found!\ndid you already run it?")
@@ -64,8 +64,7 @@ class Dumper(private val pkg: String) {
 
                 if (!file.contains(".dat") && autoFix) {
                     log.appendLine("Fixing...")
-                    val is32bit = mem.sAddress.toHex().length == 8
-                    val fixer = Fixer.fixDump(pathOut, mem.sAddress.toHex(), is32bit)
+                    val fixer = Fixer.fixDump(pathOut, mem.sAddress.toHex(), is32Bit)
                     // Check output fixer and error fixer
                     if (fixer[0].isNotEmpty()) {
                         log.appendLine("Fixer output : \n${fixer[0].joinToString("\n")}")

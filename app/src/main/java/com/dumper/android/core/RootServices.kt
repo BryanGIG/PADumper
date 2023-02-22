@@ -39,14 +39,14 @@ class RootServices : RootService(), Handler.Callback {
                 val logOutput = StringBuilder()
                 val process = requestData.getString(PROCESS_NAME)
                 val listFile = requestData.getStringArray(LIST_FILE)
-                val isFlagCheck = requestData.getBoolean(IS_FLAG_CHECK)
-                val is32Bit = requestData.getBoolean(LIBRARY_ARCH_BOOL)
+                val isFlagCheck = requestData.getBoolean(IS_FLAG_CHECK, false)
+                val is32Bit = requestData.getBoolean(LIBRARY_ARCH_BOOL, false)
                 val isAutoFix = requestData.getBoolean(IS_FIX_NAME, false)
                 if (process != null && listFile != null) {
                     val dumper = Dumper(process)
                     for (file in listFile) {
                         dumper.file = file
-                        logOutput.appendLine(dumper.dumpFile(isAutoFix, isFlagCheck, is32Bit))
+                        logOutput.appendLine(dumper.dumpFile(isAutoFix, is32Bit, isFlagCheck))
                     }
                     data.putString(DUMP_LOG, logOutput.toString())
                 } else {
