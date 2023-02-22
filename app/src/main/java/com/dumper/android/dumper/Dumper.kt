@@ -96,14 +96,14 @@ class Dumper(private val pkg: String) {
 
             val lineStart = lines.find {
                 val map = MapLinux(it)
-                if (file.contains(".dat")) {
-                     map.getPath().contains(file)
-                } else {
+                if (file.contains(".so")) {
                     if (checkFlag)
                         map.getPerms().contains("r-xp") && map.getPath().contains(file)
                     else {
                         map.getPath().contains(file)
                     }
+                } else {
+                     map.getPath().contains(file)
                 }
             } ?: throw Exception("Unable find baseAddress of $file")
 
@@ -111,7 +111,7 @@ class Dumper(private val pkg: String) {
 
             val lineEnd = lines.findLast {
                 val map = MapLinux(it)
-                mapStart.getInode() == map.getInode()
+                mapStart.getInode() == map.getInode() && mapStart.getDev() == map.getDev()
             } ?: throw Exception("Unable find endAddress of $file")
 
             val mapEnd = MapLinux(lineEnd)
