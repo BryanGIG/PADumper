@@ -1,7 +1,13 @@
 package com.dumper.android.core
 
 import android.content.Intent
-import android.os.*
+import android.os.Bundle
+import android.os.Handler
+import android.os.IBinder
+import android.os.Looper
+import android.os.Message
+import android.os.Messenger
+import android.os.RemoteException
 import android.util.Log
 import com.dumper.android.dumper.Dumper
 import com.dumper.android.dumper.process.Process
@@ -34,12 +40,13 @@ class RootServices : RootService(), Handler.Callback {
                 val process = requestData.getString(PROCESS_NAME)
                 val listFile = requestData.getStringArray(LIST_FILE)
                 val isFlagCheck = requestData.getBoolean(IS_FLAG_CHECK)
+                val is32Bit = requestData.getBoolean(LIBRARY_ARCH_BOOL)
                 val isAutoFix = requestData.getBoolean(IS_FIX_NAME, false)
                 if (process != null && listFile != null) {
                     val dumper = Dumper(process)
                     for (file in listFile) {
                         dumper.file = file
-                        logOutput.appendLine(dumper.dumpFile(isAutoFix, isFlagCheck))
+                        logOutput.appendLine(dumper.dumpFile(isAutoFix, isFlagCheck, is32Bit))
                     }
                     data.putString(DUMP_LOG, logOutput.toString())
                 } else {
@@ -69,6 +76,7 @@ class RootServices : RootService(), Handler.Callback {
         const val MSG_GET_PROCESS_LIST = 2
         const val DUMP_LOG = "DUMP_LOG"
         const val LIBRARY_DIR_NAME = "NATIVE_DIR"
+        const val LIBRARY_ARCH_BOOL = "NATIVE_ARCH"
         const val LIST_ALL_PROCESS = "LIST_ALL_PROCESS"
         const val PROCESS_NAME = "PROCESS"
         const val LIST_FILE = "LIST_FILE"

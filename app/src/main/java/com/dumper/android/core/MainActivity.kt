@@ -3,7 +3,11 @@ package com.dumper.android.core
 import android.content.Intent
 import android.content.Intent.ACTION_VIEW
 import android.net.Uri
-import android.os.*
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.os.Message
+import android.os.Messenger
 import android.view.Menu
 import android.view.MenuItem
 import androidx.activity.viewModels
@@ -15,6 +19,7 @@ import androidx.navigation.ui.setupWithNavController
 import com.dumper.android.R
 import com.dumper.android.core.RootServices.Companion.IS_FIX_NAME
 import com.dumper.android.core.RootServices.Companion.IS_FLAG_CHECK
+import com.dumper.android.core.RootServices.Companion.LIBRARY_ARCH_BOOL
 import com.dumper.android.core.RootServices.Companion.LIBRARY_DIR_NAME
 import com.dumper.android.core.RootServices.Companion.LIST_FILE
 import com.dumper.android.core.RootServices.Companion.MSG_DUMP_PROCESS
@@ -75,6 +80,7 @@ class MainActivity : AppCompatActivity() {
         process: String,
         dump_file: Array<String>,
         autoFix: Boolean,
+        is32Bit: Boolean,
         flagCheck: Boolean
     ) {
         val message = Message.obtain(null, MSG_DUMP_PROCESS)
@@ -86,6 +92,7 @@ class MainActivity : AppCompatActivity() {
             if (autoFix) {
                 putBoolean(IS_FIX_NAME, true)
                 putString(LIBRARY_DIR_NAME, "${filesDir.path}/SoFixer")
+                putBoolean(LIBRARY_ARCH_BOOL, is32Bit)
             }
         }
 

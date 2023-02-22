@@ -11,4 +11,5 @@
     <string name="memory">Memory</string>
     <string name="console">Console</string>
     <string name="check_flag_address">Check flag address</string>
+    <string name="arch_abi_32_bit_or_64_bit">ELF Arch (32 Bit or 64 Bit)</string>
 </resources>
