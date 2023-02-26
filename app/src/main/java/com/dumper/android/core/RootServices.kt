@@ -28,7 +28,7 @@ class RootServices : RootService(), Handler.Callback {
 
         when (msg.what) {
             MSG_GET_PROCESS_LIST -> {
-                val process = Process(this).getAllProcess()
+                val process = Process.getAllProcess(this)
                 reply.what = MSG_GET_PROCESS_LIST
                 data.putParcelableArrayList(LIST_ALL_PROCESS, process)
             }

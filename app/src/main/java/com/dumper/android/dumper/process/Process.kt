@@ -7,8 +7,9 @@ import android.content.pm.ApplicationInfo
 import com.dumper.android.BuildConfig
 import com.dumper.android.utils.getApplicationInfoCompact
 
-class Process(private val ctx: Context) {
-    fun getAllProcess(): ArrayList<ProcessData> {
+object Process {
+
+    fun getAllProcess(ctx: Context): ArrayList<ProcessData> {
         val finalAppsBundle = ArrayList<ProcessData>()
         val activityManager = ctx.getSystemService(ACTIVITY_SERVICE) as ActivityManager
 
