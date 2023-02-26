@@ -26,10 +26,12 @@ import com.dumper.android.core.RootServices.Companion.MSG_DUMP_PROCESS
 import com.dumper.android.core.RootServices.Companion.MSG_GET_PROCESS_LIST
 import com.dumper.android.core.RootServices.Companion.PROCESS_NAME
 import com.dumper.android.databinding.ActivityMainBinding
+import com.dumper.android.dumper.Dumper
 import com.dumper.android.dumper.Fixer
 import com.dumper.android.messager.MSGConnection
 import com.dumper.android.messager.MSGReceiver
 import com.dumper.android.ui.console.ConsoleViewModel
+import com.dumper.android.ui.memory.MemoryViewModel
 import com.topjohnwu.superuser.ipc.RootService
 
 class MainActivity : AppCompatActivity() {
@@ -39,6 +41,7 @@ class MainActivity : AppCompatActivity() {
     private val receiver = Messenger(Handler(Looper.getMainLooper(), MSGReceiver(this)))
     private lateinit var dumperConnection: MSGConnection
 
+    val memory: MemoryViewModel by viewModels()
     val console: ConsoleViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,7 +49,12 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setNavigationController()
-        initService()
+
+        Fixer.extractLibs(this)
+
+        if (intent.getBooleanExtra("IS_ROOT", false)) {
+            initRootService()
+        }
     }
 
     private fun setNavigationController() {
@@ -61,8 +69,7 @@ class MainActivity : AppCompatActivity() {
         binding.navView.setupWithNavController(navController)
     }
 
-    private fun initService() {
-        Fixer.extractLibs(this)
+    private fun initRootService() {
         if (remoteMessenger == null) {
             dumperConnection = MSGConnection(this)
             val intent = Intent(applicationContext, RootServices::class.java)
@@ -78,26 +85,45 @@ class MainActivity : AppCompatActivity() {
 
     fun sendRequestDump(
         process: String,
-        dump_file: Array<String>,
+        dumpFile: Array<String>,
         autoFix: Boolean,
         is32Bit: Boolean,
         flagCheck: Boolean
     ) {
-        val message = Message.obtain(null, MSG_DUMP_PROCESS)
 
-        message.data.apply {
-            putString(PROCESS_NAME, process)
-            putStringArray(LIST_FILE, dump_file)
-            putBoolean(IS_FLAG_CHECK, flagCheck)
-            if (autoFix) {
-                putBoolean(IS_FIX_NAME, true)
-                putString(LIBRARY_DIR_NAME, "${filesDir.path}/SoFixer")
-                putBoolean(LIBRARY_ARCH_BOOL, is32Bit)
+        if (intent.getBooleanExtra("IS_ROOT", false)) {
+            val message = Message.obtain(null, MSG_DUMP_PROCESS)
+
+            message.data.apply {
+                putString(PROCESS_NAME, process)
+                putStringArray(LIST_FILE, dumpFile)
+                putBoolean(IS_FLAG_CHECK, flagCheck)
+                if (autoFix) {
+                    putBoolean(IS_FIX_NAME, true)
+                    putString(LIBRARY_DIR_NAME, "${filesDir.path}/SoFixer")
+                    putBoolean(LIBRARY_ARCH_BOOL, is32Bit)
+                }
+            }
+
+            message.replyTo = receiver
+            remoteMessenger?.send(message)
+        } else {
+            val dumper = Dumper(process)
+
+            dumpFile.forEach {
+                dumper.file = it
+
+                console.appendLine(
+
+                    try {
+                        dumper.dumpFile(autoFix, is32Bit, flagCheck)
+                    } catch (e: Exception) {
+                        e.message!!
+                    }
+
+                )
             }
         }
-
-        message.replyTo = receiver
-        remoteMessenger?.send(message)
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
