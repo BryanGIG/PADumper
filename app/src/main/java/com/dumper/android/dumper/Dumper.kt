@@ -1,6 +1,6 @@
 package com.dumper.android.dumper
 
-import androidx.core.text.isDigitsOnly
+import com.dumper.android.dumper.process.Process
 import com.dumper.android.utils.DEFAULT_DIR
 import com.dumper.android.utils.toHex
 import java.io.File
@@ -19,10 +19,10 @@ class Dumper(private val pkg: String) {
      * @param flagCheck if `true` the dumped file will be checked for flags/
      * @return log of the dump
      */
-    fun dumpFile(autoFix: Boolean, is32Bit: Boolean, flagCheck: Boolean): String {
+    fun dumpFile(autoFix: Boolean, is32Bit: Boolean, flagCheck: Boolean, output: String): String {
         val log = StringBuilder()
         try {
-            mem.pid = getProcessID() ?: throw Exception("Process not found!\ndid you already run it?")
+            mem.pid = Process.getProcessID(pkg) ?: throw Exception("Process not found!")
 
             log.appendLine("PID : ${mem.pid}")
             log.appendLine("FILE : $file")
@@ -47,35 +47,35 @@ class Dumper(private val pkg: String) {
                 val path = File("$DEFAULT_DIR/$pkg")
                 if (!path.exists()) path.mkdirs()
 
-                val pathOut = File("${path.absolutePath}/${mem.sAddress.toHex()}-${mem.eAddress.toHex()}-$file")
-                val outputStream = pathOut.outputStream()
+            val pathOut = File("${path.absolutePath}/${mem.sAddress.toHex()}-${mem.eAddress.toHex()}-$file")
+            val outputStream = pathOut.outputStream()
 
-                val inputAccess = RandomAccessFile("/proc/${mem.pid}/mem", "r")
-                inputAccess.channel.let { fileChannel ->
-                    var bytesWritten = 0
-                    val buffer = ByteBuffer.allocate(1024)
-                    while (bytesWritten < mem.size) {
-                        val bytesReaded = fileChannel.read(buffer, mem.sAddress + bytesWritten)
-                        outputStream.write(buffer.array(), 0, bytesReaded)
-                        buffer.clear()
-                        bytesWritten += bytesReaded
-                    }
+            val inputAccess = RandomAccessFile("/proc/${mem.pid}/mem", "r")
+            inputAccess.channel.let { fileChannel ->
+                var bytesWritten = 0
+                val buffer = ByteBuffer.allocate(1024)
+                while (bytesWritten < mem.size) {
+                    val bytesReaded = fileChannel.read(buffer, mem.sAddress + bytesWritten)
+                    outputStream.write(buffer.array(), 0, bytesReaded)
+                    buffer.clear()
+                    bytesWritten += bytesReaded
                 }
-
-                if (!file.contains(".dat") && autoFix) {
-                    log.appendLine("Fixing...")
-                    val fixer = Fixer.fixDump(pathOut, mem.sAddress.toHex(), is32Bit)
-                    // Check output fixer and error fixer
-                    if (fixer[0].isNotEmpty()) {
-                        log.appendLine("Fixer output : \n${fixer[0].joinToString("\n")}")
-                    }
-                    if (fixer[1].isNotEmpty()) {
-                        log.appendLine("Fixer error : \n${fixer[1].joinToString("\n")}")
-                    }
-                }
-                log.appendLine("Dump Success")
-                log.appendLine("Output: ${pathOut.parent}")
             }
+
+            if (!file.contains(".dat") && autoFix) {
+                log.appendLine("Fixing...")
+                val fixer = Fixer.fixDump(pathOut, mem.sAddress.toHex(), is32Bit)
+                // Check output fixer and error fixer
+                if (fixer[0].isNotEmpty()) {
+                    log.appendLine("Fixer output : \n${fixer[0].joinToString("\n")}")
+                }
+                if (fixer[1].isNotEmpty()) {
+                    log.appendLine("Fixer error : \n${fixer[1].joinToString("\n")}")
+                }
+            }
+
+            log.appendLine("Dump Success")
+            log.appendLine("Output: ${pathOut.parent}")
         } catch (e: Exception) {
             log.appendLine("[ERROR] $e")
             e.printStackTrace()
@@ -120,33 +120,4 @@ class Dumper(private val pkg: String) {
         }
     }
 
-    /**
-     * Get the process ID
-     *
-     * @throws Exception if dir "/proc" is empty
-     * @throws FileNotFoundException if "/proc" failed to open
-     */
-    private fun getProcessID(): Int? {
-        val proc = File("/proc")
-        if (proc.exists()) {
-            val dPID = proc.listFiles()
-            if (dPID.isNullOrEmpty()) {
-                throw Exception("Unable to get process list id")
-            }
-            for (line in dPID) {
-                if (line.name.isDigitsOnly()) {
-                    val cmdline = File("${line.path}/cmdline")
-                    if (cmdline.exists()) {
-                        val textCmd = cmdline.readText()
-                        if (textCmd.contains(pkg)) {
-                            return line.name.toInt()
-                        }
-                    }
-                }
-            }
-        } else {
-            throw FileNotFoundException("Failed To Open : ${proc.path}")
-        }
-        return null
-    }
 }

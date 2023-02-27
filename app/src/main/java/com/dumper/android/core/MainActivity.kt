@@ -28,9 +28,11 @@ import com.dumper.android.core.RootServices.Companion.PROCESS_NAME
 import com.dumper.android.databinding.ActivityMainBinding
 import com.dumper.android.dumper.Dumper
 import com.dumper.android.dumper.Fixer
+import com.dumper.android.dumper.process.Process
 import com.dumper.android.messager.MSGConnection
 import com.dumper.android.messager.MSGReceiver
 import com.dumper.android.ui.console.ConsoleViewModel
+import com.dumper.android.ui.memory.MemoryFragment
 import com.dumper.android.ui.memory.MemoryViewModel
 import com.topjohnwu.superuser.ipc.RootService
 
@@ -78,9 +80,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun sendRequestAllProcess() {
-        val message = Message.obtain(null, MSG_GET_PROCESS_LIST)
-        message.replyTo = receiver
-        remoteMessenger?.send(message)
+
+        if (intent.getBooleanExtra("IS_ROOT", false)) {
+            val message = Message.obtain(null, MSG_GET_PROCESS_LIST)
+            message.replyTo = receiver
+            remoteMessenger?.send(message)
+        } else {
+            val processList = Process.getAllProcess(this, false)
+
+            val navController = binding.navHostFragmentActivityMain.getFragment<NavHostFragment>()
+            val fragments = navController.childFragmentManager.fragments
+
+            fragments.find { it is MemoryFragment }?.let { fragment ->
+                (fragment as MemoryFragment).showProcess(processList)
+            }
+        }
     }
 
     fun sendRequestDump(

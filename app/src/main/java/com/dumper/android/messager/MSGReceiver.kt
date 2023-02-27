@@ -29,6 +29,7 @@ class MSGReceiver(private val activity: MainActivity) : Handler.Callback {
                             }
                     }
             }
+
             RootServices.MSG_DUMP_PROCESS -> {
                 message.data.getString(RootServices.DUMP_LOG)?.let {
                     activity.console.append(it)
