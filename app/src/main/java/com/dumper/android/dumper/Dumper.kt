@@ -43,9 +43,21 @@ class Dumper(private val pkg: String) {
             log.appendLine("End Address : ${mem.eAddress.toHex()}")
             log.appendLine("Size Memory : ${mem.size}")
 
-            if (mem.sAddress > 1L && mem.eAddress > 1L) {
-                val path = File("$DEFAULT_DIR/$pkg")
-                if (!path.exists()) path.mkdirs()
+            if (mem.sAddress < 1L) {
+                log.appendLine("[ERROR] startAddress is null");
+                return log.toString()
+            }
+            if (mem.eAddress < 1L) {
+                log.appendLine("[ERROR] endAddress is null");
+                return log.toString()
+            }
+            if (mem.size < 1L) {
+                log.appendLine("[ERROR] memory size is negative!")
+                return log.toString()
+            }
+
+            val path = File("$output/$DEFAULT_DIR/$pkg")
+            if (!path.exists()) path.mkdirs()
 
             val pathOut = File("${path.absolutePath}/${mem.sAddress.toHex()}-${mem.eAddress.toHex()}-$file")
             val outputStream = pathOut.outputStream()

@@ -130,7 +130,7 @@ class MainActivity : AppCompatActivity() {
                 console.appendLine(
 
                     try {
-                        dumper.dumpFile(autoFix, is32Bit, flagCheck)
+                        dumper.dumpFile(autoFix, is32Bit, flagCheck, "/sdcard/Download")
                     } catch (e: Exception) {
                         e.message!!
                     }
