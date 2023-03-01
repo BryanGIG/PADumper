@@ -57,9 +57,17 @@ class Dumper(private val pkg: String) {
             }
 
             val path = File("$output/$DEFAULT_DIR/$pkg")
-            if (!path.exists()) path.mkdirs()
+            if (!path.exists() && !path.mkdirs()) {
+                log.appendLine("[ERROR] failed to create ${path.absolutePath}!")
+                return log.toString()
+            }
 
             val pathOut = File("${path.absolutePath}/${mem.sAddress.toHex()}-${mem.eAddress.toHex()}-$file")
+            if (!pathOut.exists() && !pathOut.createNewFile()) {
+                log.appendLine("[ERROR] failed to create ${pathOut.path}!")
+                return log.toString()
+            }
+
             val outputStream = pathOut.outputStream()
 
             val inputAccess = RandomAccessFile("/proc/${mem.pid}/mem", "r")
