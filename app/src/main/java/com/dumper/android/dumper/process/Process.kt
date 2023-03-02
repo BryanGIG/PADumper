@@ -8,7 +8,6 @@ import androidx.core.text.isDigitsOnly
 import com.dumper.android.BuildConfig
 import com.dumper.android.utils.getApplicationInfoCompact
 import java.io.File
-import java.io.FileNotFoundException
 
 object Process {
 
@@ -45,7 +44,7 @@ object Process {
                                 val processName = comm.readText(Charsets.UTF_8)
                                 val processPkg = cmdline.readText(Charsets.UTF_8)
 
-                                if (processPkg != "sh" && processPkg != BuildConfig.APPLICATION_ID) {
+                                if (processPkg != "sh" && !processPkg.contains(BuildConfig.APPLICATION_ID)) {
                                     val data = ProcessData(processPkg, processName)
                                     finalAppsBundle.add(data)
                                 }
@@ -60,9 +59,6 @@ object Process {
 
     /**
      * Get the process ID
-     *
-     * @throws Exception if dir "/proc" is empty
-     * @throws FileNotFoundException if "/proc" failed to open
      */
     fun getProcessID(pkg: String): Int? {
         val proc = File("/proc")
