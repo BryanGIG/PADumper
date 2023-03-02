@@ -3,6 +3,13 @@ plugins {
     id 'kotlin-android'
     id 'kotlin-parcelize'
 }
+//https://gist.github.com/paramsen/4a92c9230d799caeb3b90897da27a80c
+static def generateVersionCode() {
+    def result = "git rev-list HEAD --count".execute().text.trim() //unix
+    if(result.empty) result = "PowerShell -Command git rev-list HEAD --count".execute().text.trim() //windows
+    if(result.empty) throw new RuntimeException("Could not generate versioncode on this platform? Cmd output: ${result.text}")
+    return result.toInteger()
+}
 
 android {
     compileSdk 33
@@ -12,8 +19,8 @@ android {
         applicationId  "com.dumper.android"
         minSdk 21
         targetSdk 33
-        versionCode 1
-        versionName "0.0.1"
+        versionCode generateVersionCode()
+        versionName "0.0.3"
     }
 
     signingConfigs {
