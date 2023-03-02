@@ -28,7 +28,7 @@ class RootServices : RootService(), Handler.Callback {
 
         when (msg.what) {
             MSG_GET_PROCESS_LIST -> {
-                val process = Process(this).getAllProcess()
+                val process = Process.getAllProcess(this, true)
                 reply.what = MSG_GET_PROCESS_LIST
                 data.putParcelableArrayList(LIST_ALL_PROCESS, process)
             }
@@ -46,7 +46,7 @@ class RootServices : RootService(), Handler.Callback {
                     val dumper = Dumper(process)
                     for (file in listFile) {
                         dumper.file = file
-                        logOutput.appendLine(dumper.dumpFile(isAutoFix, is32Bit, isFlagCheck))
+                        logOutput.appendLine(dumper.dumpFile(null, isAutoFix, is32Bit, isFlagCheck, "/sdcard"))
                     }
                     data.putString(DUMP_LOG, logOutput.toString())
                 } else {

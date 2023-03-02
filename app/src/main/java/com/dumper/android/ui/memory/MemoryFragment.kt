@@ -7,7 +7,6 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.ViewModelProvider
 import com.dumper.android.core.MainActivity
 import com.dumper.android.databinding.FragmentMemoryBinding
 import com.dumper.android.dumper.process.ProcessData
@@ -22,14 +21,13 @@ class MemoryFragment : Fragment() {
     // onDestroyView.
     private val binding get() = _binding!!
 
-    private lateinit var memViewModel: MemoryViewModel
+    private val memViewModel: MemoryViewModel by activityViewModels()
     private val console: ConsoleViewModel by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        memViewModel = ViewModelProvider(this)[MemoryViewModel::class.java]
         _binding = FragmentMemoryBinding.inflate(inflater, container, false)
 
         memViewModel.packageName.observe(viewLifecycleOwner) {

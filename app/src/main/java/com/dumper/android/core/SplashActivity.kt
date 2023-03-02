@@ -4,26 +4,22 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import android.widget.Toast
 import com.topjohnwu.superuser.Shell
-import kotlin.system.exitProcess
 
 @SuppressLint("CustomSplashScreen")
 class SplashActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Shell.getShell {
-            if (it.isRoot) {
-                val intent = Intent(this@SplashActivity, MainActivity::class.java)
-                startActivity(intent)
-                finish()
-            } else {
-                MaterialAlertDialogBuilder(this@SplashActivity)
-                    .setTitle("Error")
-                    .setMessage("You need to be root to use this app")
-                    .setPositiveButton("Exit") { _, _ -> exitProcess(0) }
-                    .show()
-            }
+            val methodStr = if (it.isRoot) "root" else "non-root"
+            Toast.makeText(this@SplashActivity, "Using $methodStr method", Toast.LENGTH_SHORT).show()
+
+            val intent = Intent(this@SplashActivity, MainActivity::class.java)
+            intent.putExtra("IS_ROOT", it.isRoot)
+
+            startActivity(intent)
+            finish()
         }
     }
 }

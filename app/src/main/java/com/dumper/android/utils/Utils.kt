@@ -5,10 +5,9 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
-import java.util.ArrayList
 
 const val TAG = "PADumper"
-const val DEFAULT_DIR = "/sdcard/PADumper"
+const val DEFAULT_DIR = "PADumper"
 
 fun Long.toHex(): String {
     return this.toString(16)
