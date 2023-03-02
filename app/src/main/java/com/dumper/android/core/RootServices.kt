@@ -40,13 +40,13 @@ class RootServices : RootService(), Handler.Callback {
                 val process = requestData.getString(PROCESS_NAME)
                 val listFile = requestData.getStringArray(LIST_FILE)
                 val isFlagCheck = requestData.getBoolean(IS_FLAG_CHECK, false)
-                val is32Bit = requestData.getBoolean(LIBRARY_ARCH_BOOL, false)
+                val fixerPath = requestData.getString(LIBRARY_DIR_NAME)
                 val isAutoFix = requestData.getBoolean(IS_FIX_NAME, false)
-                if (process != null && listFile != null) {
+                if (process != null && listFile != null && fixerPath != null) {
                     val dumper = Dumper(process)
                     for (file in listFile) {
                         dumper.file = file
-                        logOutput.appendLine(dumper.dumpFile(null, isAutoFix, is32Bit, isFlagCheck, "/sdcard"))
+                        logOutput.appendLine(dumper.dumpFile(null, isAutoFix, fixerPath, isFlagCheck, "/sdcard"))
                     }
                     data.putString(DUMP_LOG, logOutput.toString())
                 } else {
@@ -76,7 +76,6 @@ class RootServices : RootService(), Handler.Callback {
         const val MSG_GET_PROCESS_LIST = 2
         const val DUMP_LOG = "DUMP_LOG"
         const val LIBRARY_DIR_NAME = "NATIVE_DIR"
-        const val LIBRARY_ARCH_BOOL = "NATIVE_ARCH"
         const val LIST_ALL_PROCESS = "LIST_ALL_PROCESS"
         const val PROCESS_NAME = "PROCESS"
         const val LIST_FILE = "LIST_FILE"

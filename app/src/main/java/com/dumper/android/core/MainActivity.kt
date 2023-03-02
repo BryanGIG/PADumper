@@ -28,7 +28,6 @@ import com.anggrayudi.storage.permission.PermissionResult
 import com.dumper.android.R
 import com.dumper.android.core.RootServices.Companion.IS_FIX_NAME
 import com.dumper.android.core.RootServices.Companion.IS_FLAG_CHECK
-import com.dumper.android.core.RootServices.Companion.LIBRARY_ARCH_BOOL
 import com.dumper.android.core.RootServices.Companion.LIBRARY_DIR_NAME
 import com.dumper.android.core.RootServices.Companion.LIST_FILE
 import com.dumper.android.core.RootServices.Companion.MSG_DUMP_PROCESS
@@ -120,6 +119,7 @@ class MainActivity : AppCompatActivity() {
         is32Bit: Boolean,
         flagCheck: Boolean
     ) {
+        val soFixerPath = "${filesDir.path}/SoFixer${if (is32Bit) "32" else "64"}"
 
         if (intent.getBooleanExtra("IS_ROOT", false)) {
             val message = Message.obtain(null, MSG_DUMP_PROCESS)
@@ -130,8 +130,7 @@ class MainActivity : AppCompatActivity() {
                 putBoolean(IS_FLAG_CHECK, flagCheck)
                 if (autoFix) {
                     putBoolean(IS_FIX_NAME, true)
-                    putString(LIBRARY_DIR_NAME, "${filesDir.path}/SoFixer")
-                    putBoolean(LIBRARY_ARCH_BOOL, is32Bit)
+                    putString(LIBRARY_DIR_NAME, soFixerPath)
                 }
             }
 
@@ -146,7 +145,7 @@ class MainActivity : AppCompatActivity() {
                 console.appendLine(
 
                     try {
-                        dumper.dumpFile(this, autoFix, is32Bit, flagCheck)
+                        dumper.dumpFile(this, autoFix, soFixerPath, flagCheck)
                     } catch (e: Exception) {
                         e.message!!
                     }

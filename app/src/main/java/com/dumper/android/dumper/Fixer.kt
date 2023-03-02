@@ -1,7 +1,6 @@
 package com.dumper.android.dumper
 
 import android.content.Context
-import com.dumper.android.BuildConfig
 import com.topjohnwu.superuser.Shell
 import java.io.File
 
@@ -27,16 +26,15 @@ object Fixer {
      * Run SoFixer
      * @param dumpFile the file to dump
      * @param startAddress the start address of the dump
-     * @param is32 if the dump is 32 bit or 64 bit
      * @return List of strings containing the results of the SoFixer
      */
     fun fixDump(
+        fixerPath: String,
         dumpFile: File,
-        startAddress: String, is32: Boolean
+        startAddress: String
     ): Array<List<String>> {
         val outList = mutableListOf<String>()
         val errList = mutableListOf<String>()
-        val fixerPath = File("/data/data/${BuildConfig.APPLICATION_ID}/files", if (is32) "SoFixer32" else "SoFixer64").absolutePath
         ProcessBuilder(
             listOf(
                 fixerPath,
