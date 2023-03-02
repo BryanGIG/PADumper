@@ -146,7 +146,7 @@ class MainActivity : AppCompatActivity() {
                 console.appendLine(
 
                     try {
-                        dumper.dumpFile(autoFix, is32Bit, flagCheck, "/sdcard/Download")
+                        dumper.dumpFile(this, autoFix, is32Bit, flagCheck)
                     } catch (e: Exception) {
                         e.message!!
                     }
