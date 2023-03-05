@@ -3,6 +3,7 @@ plugins {
     id 'kotlin-android'
     id 'kotlin-parcelize'
 }
+
 //https://gist.github.com/paramsen/4a92c9230d799caeb3b90897da27a80c
 static def generateVersionCode() {
     def result = "git rev-list HEAD --count".execute().text.trim() //unix
@@ -20,7 +21,7 @@ android {
         minSdk 21
         targetSdk 33
         versionCode generateVersionCode()
-        versionName "0.0.3"
+        versionName "0.0.4"
     }
 
     signingConfigs {
@@ -81,8 +82,8 @@ dependencies {
 
     //Root
     def libsuVersion = '5.0.4'
-    implementation "com.github.topjohnwu.libsu:core:${libsuVersion}"
-    implementation "com.github.topjohnwu.libsu:service:${libsuVersion}"
+    implementation "com.github.topjohnwu.libsu:core:$libsuVersion"
+    implementation "com.github.topjohnwu.libsu:service:$libsuVersion"
 
     //Storage Helper
     implementation "com.anggrayudi:storage:1.5.4"
