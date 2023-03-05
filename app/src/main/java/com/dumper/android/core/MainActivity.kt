@@ -121,6 +121,8 @@ class MainActivity : AppCompatActivity() {
     ) {
         val soFixerPath = "${filesDir.path}/SoFixer${if (is32Bit) "32" else "64"}"
 
+        Toast.makeText(this, "Please wait...", Toast.LENGTH_SHORT).show()
+
         if (intent.getBooleanExtra("IS_ROOT", false)) {
             val message = Message.obtain(null, MSG_DUMP_PROCESS)
 
@@ -143,13 +145,11 @@ class MainActivity : AppCompatActivity() {
                 dumper.file = it
 
                 console.appendLine(
-
                     try {
                         dumper.dumpFile(this, autoFix, soFixerPath, flagCheck)
                     } catch (e: Exception) {
-                        e.message!!
+                        "[ERROR] ${e.stackTraceToString()}"
                     }
-
                 )
             }
         }

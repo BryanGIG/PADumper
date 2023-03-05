@@ -46,7 +46,9 @@ class RootServices : RootService(), Handler.Callback {
                     val dumper = Dumper(process)
                     for (file in listFile) {
                         dumper.file = file
-                        logOutput.appendLine(dumper.dumpFile(null, isAutoFix, fixerPath, isFlagCheck, "/sdcard"))
+                        logOutput.appendLine(
+                            dumper.dumpFile(null, isAutoFix, fixerPath, isFlagCheck)
+                        )
                     }
                     data.putString(DUMP_LOG, logOutput.toString())
                 } else {

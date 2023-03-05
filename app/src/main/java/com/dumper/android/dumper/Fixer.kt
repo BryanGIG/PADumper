@@ -14,28 +14,33 @@ object Fixer {
         val libs = ctx.assets.list("SoFixer")
         libs?.forEach { lib ->
             ctx.assets.open("SoFixer/$lib").use { input ->
-                File(ctx.filesDir, lib).outputStream().use { output ->
-                    input.copyTo(output)
-                    Shell.cmd("chmod 777 ${ctx.filesDir.absolutePath}/$lib").exec()
+                val out = File(ctx.filesDir, lib)
+                if (!out.exists()) {
+                    input.copyTo(out.outputStream())
+                    Shell.cmd("chmod 777 ${out.absolutePath}").exec()
                 }
             }
         }
     }
 
+
+
     /**
      * Run SoFixer
-     * @param dumpFile the file to dump
+     * @param fixerPath soFixer path
+     * @param dumpFile file to dump
      * @param startAddress the start address of the dump
-     * @return List of strings containing the results of the SoFixer
+     * @return pair of results inputStream, errorStream
      */
     fun fixDump(
         fixerPath: String,
         dumpFile: File,
         startAddress: String
-    ): Array<List<String>> {
+    ): Pair<List<String>, List<String>> {
         val outList = mutableListOf<String>()
         val errList = mutableListOf<String>()
-        ProcessBuilder(
+        
+        val proc = ProcessBuilder(
             listOf(
                 fixerPath,
                 "-s",
@@ -47,19 +52,16 @@ object Fixer {
             )
         )
             .redirectErrorStream(true)
-            .start().let { proc ->
-                proc.waitFor()
-                proc.inputStream.bufferedReader().use { buff ->
-                    buff.forEachLine {
-                        outList.add(it)
-                    }
-                }
-                proc.errorStream.bufferedReader().use { buff ->
-                    buff.forEachLine {
-                        errList.add(it)
-                    }
-                }
-            }
-        return arrayOf(outList, errList)
+            .start()
+
+        proc.waitFor()
+        proc.inputStream.bufferedReader().use { buff ->
+            outList.addAll(buff.lineSequence())
+        }
+        proc.errorStream.bufferedReader().use { buff ->
+            errList.addAll(buff.lineSequence())
+        }
+
+        return Pair(outList, errList)
     }
 }

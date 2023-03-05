@@ -3,10 +3,10 @@ package com.dumper.android.dumper.process
 import android.app.ActivityManager
 import android.content.Context
 import android.content.Context.ACTIVITY_SERVICE
-import android.content.pm.ApplicationInfo
 import androidx.core.text.isDigitsOnly
 import com.dumper.android.BuildConfig
 import com.dumper.android.utils.getApplicationInfoCompact
+import com.dumper.android.utils.isInvalid
 import java.io.File
 
 object Process {
@@ -58,7 +58,8 @@ object Process {
     }
 
     /**
-     * Get the process ID
+     * Get the PID
+     * @return pid of process or null if process id is not found
      */
     fun getProcessID(pkg: String): Int? {
         val proc = File("/proc")
@@ -83,7 +84,4 @@ object Process {
         }
         return null
     }
-
-    private fun ApplicationInfo.isInvalid() =
-        (flags and ApplicationInfo.FLAG_STOPPED != 0) || (flags and ApplicationInfo.FLAG_SYSTEM != 0)
 }
