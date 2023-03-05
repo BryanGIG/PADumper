@@ -142,6 +142,7 @@ class Dumper(private val pkg: String) {
             log.appendLine("[ERROR] ${e.stackTraceToString()}")
             e.printStackTrace()
         }
+        log.appendLine("==========================")
         return log.toString()
     }
 

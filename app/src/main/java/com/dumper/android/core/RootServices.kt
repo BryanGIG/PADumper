@@ -14,7 +14,6 @@ import com.dumper.android.dumper.process.Process
 import com.dumper.android.utils.TAG
 import com.topjohnwu.superuser.ipc.RootService
 
-
 class RootServices : RootService(), Handler.Callback {
     override fun onBind(intent: Intent): IBinder {
         val h = Handler(Looper.getMainLooper(), this)
