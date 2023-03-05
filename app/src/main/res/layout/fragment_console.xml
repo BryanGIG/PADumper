@@ -1,28 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.console.ConsoleFragment">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context=".ui.console.ConsoleFragment"
+    android:baselineAligned="false">
 
-    <androidx.core.widget.NestedScrollView
-        android:id="@+id/scrollView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+    <FrameLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="3">
 
-        <HorizontalScrollView
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/scrollView"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <TextView
-                android:id="@+id/console"
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <TextView
+                    android:id="@+id/console"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="10dp"
+                    android:fontFamily="monospace"
+                    android:padding="8dp"
+                    android:textSize="12sp" />
+
+            </HorizontalScrollView>
+
+        </androidx.core.widget.NestedScrollView>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/copyConsole"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_margin="10dp"
-                android:fontFamily="monospace"
-                android:padding="8dp"
-                android:textSize="12sp" />
-        </HorizontalScrollView>
-    </androidx.core.widget.NestedScrollView>
-
-</FrameLayout>
+                android:clickable="true"
+                app:backgroundTint="@color/material_on_primary_disabled"
+                android:layout_gravity="bottom|end"
+                android:layout_margin="8dp"
+                android:elevation="5dp"
+                android:src="@drawable/content_copy" />
+        </FrameLayout>
+    </FrameLayout>
+</LinearLayout>

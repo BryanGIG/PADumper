@@ -1,5 +1,8 @@
 package com.dumper.android.ui.console
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -29,6 +32,12 @@ class ConsoleFragment : Fragment() {
                 delay(10)
                 consoleBind.scrollView.fullScroll(View.FOCUS_DOWN)
             }
+        }
+
+        consoleBind.copyConsole.setOnClickListener {
+            val clipboard = context?.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            val clip = ClipData.newPlainText("PADumper-Log", consoleBind.console.text)
+            clipboard.setPrimaryClip(clip)
         }
 
         return consoleBind.root
