@@ -40,9 +40,9 @@ class RootServices : RootService(), Handler.Callback {
                 val process = requestData.getString(PROCESS_NAME)
                 val listFile = requestData.getStringArray(LIST_FILE)
                 val isFlagCheck = requestData.getBoolean(IS_FLAG_CHECK, false)
-                val fixerPath = requestData.getString(LIBRARY_DIR_NAME)
+                val fixerPath = requestData.getString(LIBRARY_DIR_NAME, "")
                 val isAutoFix = requestData.getBoolean(IS_FIX_NAME, false)
-                if (process != null && listFile != null && fixerPath != null) {
+                if (process != null && listFile != null) {
                     val dumper = Dumper(process)
                     for (file in listFile) {
                         dumper.file = file

@@ -37,3 +37,6 @@ fun PackageManager.getApplicationInfoCompact(packageName: String, flags: Int): A
         getApplicationInfo(packageName, flags)
     }
 }
+
+fun ApplicationInfo.isInvalid() =
+    (flags and ApplicationInfo.FLAG_STOPPED != 0) || (flags and ApplicationInfo.FLAG_SYSTEM != 0)
