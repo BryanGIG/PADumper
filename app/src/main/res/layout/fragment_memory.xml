@@ -67,21 +67,12 @@
             android:text="@string/fix_elf_result"
             app:layout_constraintTop_toBottomOf="@+id/flagCheck" />
 
-        <Switch
-            android:id="@+id/archELF"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="30dp"
-            android:text="@string/arch_abi_32_bit_or_64_bit"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/autoFix" />
-
         <CheckBox
             android:id="@+id/metadata"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/dump_global_metadata_dat"
-            app:layout_constraintTop_toBottomOf="@+id/archELF" />
+            app:layout_constraintTop_toBottomOf="@+id/autoFix" />
 
 
         <Button

@@ -9,7 +9,6 @@ This dumper is made for dumping libil2cpp.so but you can use it to dump any ELF 
 
 - [**Optional**] Un-check `Check flag address` if you want to skip check address permission (**r-xp**)
 - [**Optional**] Check `Fix ELF` if you want fix the ELF
-  - [**Optional**] Check `ELF Arch` if you want use 32Bit Fixer ELF, else otherwise
 - [**Optional**] Check `global-metadata.dat` if you want dump unity metadata from memory
 - Dump and wait until finish
 - Result will be in `/sdcard/PADumper/[Process]/[startAddress-endAddress-file]`

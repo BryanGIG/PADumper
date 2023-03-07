@@ -68,7 +68,6 @@ class MemoryFragment : Fragment() {
                 process,
                 listDump.toTypedArray(),
                 binding.autoFix.isChecked,
-                !binding.archELF.isChecked,
                 binding.flagCheck.isChecked
             )
         }

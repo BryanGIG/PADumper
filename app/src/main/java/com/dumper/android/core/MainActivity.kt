@@ -116,10 +116,9 @@ class MainActivity : AppCompatActivity() {
         process: String,
         dumpFile: Array<String>,
         autoFix: Boolean,
-        is32Bit: Boolean,
         flagCheck: Boolean
     ) {
-        val soFixerPath = "${filesDir.path}/SoFixer${if (is32Bit) "32" else "64"}"
+        val soFixerPath = "${filesDir.path}/SoFixer"
 
         Toast.makeText(this, "Please wait...", Toast.LENGTH_SHORT).show()
 

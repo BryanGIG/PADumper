@@ -35,11 +35,20 @@ class Dumper(private val pkg: String) {
 
         val inputChannel = RandomAccessFile("/proc/${mem.pid}/mem", "r").channel
 
+        val archELF = Fixer.getArchELF(inputChannel, mem)
+
         writeChannelIntoFile(inputChannel, outputFile)
 
-        if (!file.contains(".dat") && autoFix) {
+        if (autoFix && archELF != Arch.UNKNOWN) {
             log.appendLine("Fixing...")
-            val fixer = Fixer.fixDump(fixerPath, outputFile, mem.sAddress.toHex())
+
+            val fixerELF = fixerPath + when (archELF) {
+                Arch.ARCH_32BIT -> "32"
+                Arch.ARCH_64BIT -> "64"
+                else -> "" //just to disable the warning
+            }
+
+            val fixer = Fixer.fixDump(fixerELF, outputFile, mem.sAddress.toHex())
             // Check output fixer and error fixer
             if (fixer.first.isNotEmpty()) {
                 log.appendLine("Fixer output : \n${fixer.first.joinToString("\n")}")
@@ -65,11 +74,20 @@ class Dumper(private val pkg: String) {
 
         val inputChannel = RandomAccessFile("/proc/${mem.pid}/mem", "r").channel
 
+        val archELF = Fixer.getArchELF(inputChannel, mem)
+
         writeChannelIntoFile(inputChannel, outputFile)
 
-        if (!file.contains(".dat") && autoFix) {
+        if (autoFix && archELF != Arch.UNKNOWN) {
             log.appendLine("Fixing...")
-            val fixer = Fixer.fixDump(fixerPath, outputFile, mem.sAddress.toHex())
+
+            val fixerELF = fixerPath + when (archELF) {
+                Arch.ARCH_32BIT -> "32"
+                Arch.ARCH_64BIT -> "64"
+                else -> "" //just to disable the warning
+            }
+
+            val fixer = Fixer.fixDump(fixerELF, outputFile, mem.sAddress.toHex())
             // Check output fixer and error fixer
             if (fixer.first.isNotEmpty()) {
                 log.appendLine("Fixer output : \n${fixer.first.joinToString("\n")}")

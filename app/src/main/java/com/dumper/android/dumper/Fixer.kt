@@ -3,8 +3,19 @@ package com.dumper.android.dumper
 import android.content.Context
 import com.topjohnwu.superuser.Shell
 import java.io.File
+import java.nio.ByteBuffer
+import java.nio.channels.FileChannel
 
+
+enum class Arch {
+    UNKNOWN,
+    ARCH_32BIT,
+    ARCH_64BIT
+}
 object Fixer {
+
+    private val ELFMAG =
+        byteArrayOf(0x7F.toByte(), 'E'.code.toByte(), 'L'.code.toByte(), 'F'.code.toByte())
 
     /**
      * Extract SoFixer into filesDir and
@@ -23,6 +34,31 @@ object Fixer {
         }
     }
 
+    fun getArchELF(mFile: FileChannel, memory: Memory) : Arch {
+        val byteHeader = ByteBuffer.allocate(512)
+
+        mFile.read(byteHeader, memory.sAddress)
+
+        if (byteHeader[0] != ELFMAG[0] || byteHeader[1] != ELFMAG[1] ||
+            byteHeader[2] != ELFMAG[2] || byteHeader[3] != ELFMAG[3]
+        ) {
+            return Arch.UNKNOWN
+        }
+
+
+        mFile.position(0) //reset pos
+        return when (byteHeader[4].toInt()) {
+            1 -> {
+                Arch.ARCH_32BIT
+            }
+            2 -> {
+                Arch.ARCH_64BIT
+            }
+            else -> {
+                Arch.UNKNOWN
+            }
+        }
+    }
 
 
     /**
@@ -55,11 +91,11 @@ object Fixer {
             .start()
 
         proc.waitFor()
-        proc.inputStream.bufferedReader().use { buff ->
-            outList.addAll(buff.lineSequence())
+        proc.inputStream.bufferedReader().useLines { buff ->
+            outList.addAll(buff)
         }
-        proc.errorStream.bufferedReader().use { buff ->
-            errList.addAll(buff.lineSequence())
+        proc.errorStream.bufferedReader().useLines { buff ->
+            errList.addAll(buff)
         }
 
         return Pair(outList, errList)
