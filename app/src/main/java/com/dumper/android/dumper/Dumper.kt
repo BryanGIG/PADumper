@@ -205,7 +205,7 @@ class Dumper(private val pkg: String) {
 
         val lineEnd = lines.findLast {
             val map = MapLinux(it)
-            mapStart.getInode() == map.getInode() && mapStart.getDev() == map.getDev()
+            mapStart.getInode() == map.getInode()
         } ?: throw Exception("Unable find endAddress of $file")
 
         val mapEnd = MapLinux(lineEnd)
