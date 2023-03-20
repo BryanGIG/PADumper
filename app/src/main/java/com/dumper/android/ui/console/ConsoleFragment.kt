@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
@@ -35,9 +36,10 @@ class ConsoleFragment : Fragment() {
         }
 
         consoleBind.copyConsole.setOnClickListener {
-            val clipboard = context?.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             val clip = ClipData.newPlainText("PADumper-Log", consoleBind.console.text)
             clipboard.setPrimaryClip(clip)
+            Toast.makeText(requireContext(), "Log Copied!", Toast.LENGTH_SHORT).show()
         }
 
         return consoleBind.root

@@ -44,7 +44,6 @@ import com.dumper.android.ui.memory.MemoryFragment
 import com.dumper.android.ui.memory.MemoryViewModel
 import com.topjohnwu.superuser.ipc.RootService
 
-
 class MainActivity : AppCompatActivity() {
     lateinit var binding: ActivityMainBinding
 
@@ -161,7 +160,7 @@ class MainActivity : AppCompatActivity() {
     private fun setupStoragePermission() {
         if (Build.VERSION.SDK_INT in 23..28) {
             permissionRequest.check()
-        } else if (Build.VERSION.SDK_INT == 29){
+        } else if (Build.VERSION.SDK_INT == 29) {
             storageHelper.requestStorageAccess()
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             if (!storageHelper.storage.isStorageAccessGranted(StorageId.PRIMARY)) {
