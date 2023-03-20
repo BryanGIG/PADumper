@@ -3,7 +3,6 @@ package com.dumper.android.dumper
 import android.content.Context
 import android.os.Environment
 import com.anggrayudi.storage.extension.closeStreamQuietly
-import com.anggrayudi.storage.file.createNewFileIfPossible
 import com.dumper.android.dumper.process.Process
 import com.dumper.android.utils.DEFAULT_DIR
 import com.dumper.android.utils.removeNullChar
@@ -31,7 +30,7 @@ class Dumper(private val pkg: String) {
 
         val outputFile = File("${outputDir.absolutePath}/${mem.sAddress.toHex()}-${mem.eAddress.toHex()}-$file")
         if (!outputDir.exists())
-            outputFile.createNewFileIfPossible()
+            outputFile.createNewFile()
 
         val inputChannel = RandomAccessFile("/proc/${mem.pid}/mem", "r").channel
 
@@ -39,24 +38,10 @@ class Dumper(private val pkg: String) {
 
         writeChannelIntoFile(inputChannel, outputFile)
 
-        if (autoFix && archELF != Arch.UNKNOWN) {
-            log.appendLine("Fixing...")
-
-            val fixerELF = fixerPath + when (archELF) {
-                Arch.ARCH_32BIT -> "32"
-                Arch.ARCH_64BIT -> "64"
-                else -> "" //just to disable the warning
-            }
-
-            val fixer = Fixer.fixDump(fixerELF, outputFile, mem.sAddress.toHex())
-            // Check output fixer and error fixer
-            if (fixer.first.isNotEmpty()) {
-                log.appendLine("Fixer output : \n${fixer.first.joinToString("\n")}")
-            }
-            if (fixer.second.isNotEmpty()) {
-                log.appendLine("Fixer error : \n${fixer.second.joinToString("\n")}")
-            }
+        if (autoFix) {
+            log.appendLine(fixDumpFile(fixerPath, archELF, outputFile))
         }
+
         log.appendLine("Output: ${outputFile.parent}")
         return log
     }
@@ -78,23 +63,8 @@ class Dumper(private val pkg: String) {
 
         writeChannelIntoFile(inputChannel, outputFile)
 
-        if (autoFix && archELF != Arch.UNKNOWN) {
-            log.appendLine("Fixing...")
-
-            val fixerELF = fixerPath + when (archELF) {
-                Arch.ARCH_32BIT -> "32"
-                Arch.ARCH_64BIT -> "64"
-                else -> "" //just to disable the warning
-            }
-
-            val fixer = Fixer.fixDump(fixerELF, outputFile, mem.sAddress.toHex())
-            // Check output fixer and error fixer
-            if (fixer.first.isNotEmpty()) {
-                log.appendLine("Fixer output : \n${fixer.first.joinToString("\n")}")
-            }
-            if (fixer.second.isNotEmpty()) {
-                log.appendLine("Fixer error : \n${fixer.second.joinToString("\n")}")
-            }
+        if (autoFix) {
+            log.appendLine(fixDumpFile(fixerPath, archELF, outputFile))
         }
 
         val fileOutPath = listOf(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), DEFAULT_DIR, pkg.removeNullChar())
@@ -109,6 +79,30 @@ class Dumper(private val pkg: String) {
 
         log.appendLine("Output: $fileOutputDir")
         return log
+    }
+
+    private fun fixDumpFile(fixerPath: String, archELF: Arch, outputFile: File) : String {
+        if (archELF == Arch.UNKNOWN)
+            return "";
+
+        val log = StringBuilder()
+        log.appendLine("Fixing...")
+
+        val fixerELF = fixerPath + when (archELF) {
+            Arch.ARCH_32BIT -> "32"
+            Arch.ARCH_64BIT -> "64"
+            else -> "" //just to disable the warning
+        }
+
+        val fixer = Fixer.fixDump(fixerELF, outputFile, mem.sAddress.toHex())
+        // Check output fixer and error fixer
+        if (fixer.first.isNotEmpty()) {
+            log.appendLine("Fixer output : \n${fixer.first.joinToString("\n")}")
+        }
+        if (fixer.second.isNotEmpty()) {
+            log.appendLine("Fixer error : \n${fixer.second.joinToString("\n")}")
+        }
+        return log.toString()
     }
 
     /**
