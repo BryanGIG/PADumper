@@ -28,27 +28,30 @@ object Process {
                         )
                         finalAppsBundle.add(data)
                     }
-                } catch (_: Exception) { }
+                } catch (_: Exception) {
+                }
             }
         } else {
             val proc = File("/proc")
-            if (proc.exists()) {
-                val dPID = proc.listFiles()
-                if (!dPID.isNullOrEmpty()) {
-                    for (line in dPID) {
-                        if (line.name.isDigitsOnly()) {
-                            val comm = File("${line.path}/comm")
-                            val cmdline = File("${line.path}/cmdline")
-                            if (comm.exists() && cmdline.exists()) {
+            if (!proc.exists())
+                return finalAppsBundle
 
-                                val processName = comm.readText(Charsets.UTF_8)
-                                val processPkg = cmdline.readText(Charsets.UTF_8)
+            val dPID = proc.listFiles()
+            if (dPID.isNullOrEmpty())
+                return finalAppsBundle
 
-                                if (processPkg != "sh" && !processPkg.contains(BuildConfig.APPLICATION_ID)) {
-                                    val data = ProcessData(processPkg, processName)
-                                    finalAppsBundle.add(data)
-                                }
-                            }
+            for (line in dPID) {
+                if (line.name.isDigitsOnly()) {
+                    val comm = File("${line.path}/comm")
+                    val cmdline = File("${line.path}/cmdline")
+                    if (comm.exists() && cmdline.exists()) {
+
+                        val processName = comm.readText(Charsets.UTF_8)
+                        val processPkg = cmdline.readText(Charsets.UTF_8)
+
+                        if (processPkg != "sh" && !processPkg.contains(BuildConfig.APPLICATION_ID)) {
+                            val data = ProcessData(processPkg, processName)
+                            finalAppsBundle.add(data)
                         }
                     }
                 }
@@ -63,24 +66,26 @@ object Process {
      */
     fun getProcessID(pkg: String): Int? {
         val proc = File("/proc")
-        if (proc.exists()) {
-            val dPID = proc.listFiles()
-            if (!dPID.isNullOrEmpty()) {
-                dPID.firstOrNull {
-                    if (it.name.isDigitsOnly()) {
-                        val cmdline = File("${it.path}/cmdline")
-                        if (cmdline.exists()) {
-                            val textCmd = cmdline.readText(Charsets.UTF_8)
-                            if (textCmd.contains(pkg)) {
-                                return@firstOrNull true
-                            }
-                        }
+        if (!proc.exists())
+            return null
+
+        val dPID = proc.listFiles()
+        if (dPID.isNullOrEmpty())
+            return null
+
+        dPID.find {
+            if (it.name.isDigitsOnly()) {
+                val cmdline = File("${it.path}/cmdline")
+                if (cmdline.exists()) {
+                    val textCmd = cmdline.readText(Charsets.UTF_8)
+                    if (textCmd.contains(pkg)) {
+                        return@find true
                     }
-                    return@firstOrNull false
-                }?.let {
-                    return it.name.toInt()
                 }
             }
+            return@find false
+        }?.let {
+            return it.name.toInt()
         }
         return null
     }

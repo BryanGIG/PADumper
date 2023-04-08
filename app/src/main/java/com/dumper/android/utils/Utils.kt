@@ -13,17 +13,10 @@ fun Long.toHex(): String {
     return this.toString(16)
 }
 
-fun Long.toMB(): Long {
-    return this * 1024 * 1024
-}
-
 @Suppress("DEPRECATION")
 inline fun <reified T : Parcelable> Bundle.getParcelableArrayListCompact(key: String): ArrayList<T>? {
     return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        getParcelableArrayList(
-            key,
-            T::class.java
-        )
+        getParcelableArrayList(key, T::class.java)
     } else {
         getParcelableArrayList(key)
     }
@@ -42,4 +35,4 @@ fun ApplicationInfo.isInvalid() =
     (flags and ApplicationInfo.FLAG_STOPPED != 0) || (flags and ApplicationInfo.FLAG_SYSTEM != 0)
 
 
-fun String.removeNullChar() : String = replace("\u0000", "")
+fun String.removeNullChar(): String = replace("\u0000", "")

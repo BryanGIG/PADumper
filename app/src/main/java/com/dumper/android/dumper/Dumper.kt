@@ -2,23 +2,21 @@ package com.dumper.android.dumper
 
 import android.content.Context
 import android.os.Environment
-import com.anggrayudi.storage.extension.closeStreamQuietly
 import com.dumper.android.dumper.process.Process
 import com.dumper.android.utils.DEFAULT_DIR
+import com.dumper.android.utils.copyToFile
 import com.dumper.android.utils.removeNullChar
 import com.dumper.android.utils.toHex
 import com.topjohnwu.superuser.Shell
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.RandomAccessFile
-import java.nio.ByteBuffer
-import java.nio.channels.FileChannel
 
 class Dumper(private val pkg: String) {
     private val mem = Memory(pkg)
     var file: String = ""
 
-    private fun dumpFileRoot(autoFix: Boolean, fixerPath: String) : StringBuilder {
+    private fun dumpFileRoot(autoFix: Boolean, fixerPath: String): StringBuilder {
         if (Shell.isAppGrantedRoot() == false)
             throw IllegalAccessException("The method need to be executed from root services")
 
@@ -28,17 +26,17 @@ class Dumper(private val pkg: String) {
         if (!outputDir.exists())
             outputDir.mkdirs()
 
-        val outputFile = File("${outputDir.absolutePath}/${mem.sAddress.toHex()}-${mem.eAddress.toHex()}-$file")
+        val outputFile =
+            File("${outputDir.absolutePath}/${mem.sAddress.toHex()}-${mem.eAddress.toHex()}-$file")
         if (!outputDir.exists())
             outputFile.createNewFile()
 
         val inputChannel = RandomAccessFile("/proc/${mem.pid}/mem", "r").channel
 
-        val archELF = Fixer.getArchELF(inputChannel, mem)
-
-        writeChannelIntoFile(inputChannel, outputFile)
+        inputChannel.copyToFile(mem.sAddress, mem.size, outputFile)
 
         if (autoFix) {
+            val archELF = Fixer.getArchELF(inputChannel, mem)
             log.appendLine(fixDumpFile(fixerPath, archELF, outputFile))
         }
 
@@ -46,7 +44,7 @@ class Dumper(private val pkg: String) {
         return log
     }
 
-    private fun dumpFileNonRoot(ctx: Context, autoFix: Boolean, fixerPath: String) : StringBuilder {
+    private fun dumpFileNonRoot(ctx: Context, autoFix: Boolean, fixerPath: String): StringBuilder {
         val log = StringBuilder()
 
         val outputDir = File(ctx.filesDir, "temp")
@@ -59,15 +57,18 @@ class Dumper(private val pkg: String) {
 
         val inputChannel = RandomAccessFile("/proc/${mem.pid}/mem", "r").channel
 
-        val archELF = Fixer.getArchELF(inputChannel, mem)
-
-        writeChannelIntoFile(inputChannel, outputFile)
+        inputChannel.copyToFile(mem.sAddress, mem.size, outputFile)
 
         if (autoFix) {
+            val archELF = Fixer.getArchELF(inputChannel, mem)
             log.appendLine(fixDumpFile(fixerPath, archELF, outputFile))
         }
 
-        val fileOutPath = listOf(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), DEFAULT_DIR, pkg.removeNullChar())
+        val fileOutPath = listOf(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+            DEFAULT_DIR,
+            pkg.removeNullChar()
+        )
         val fileOutputDir = File(fileOutPath.joinToString(File.separator))
         if (!fileOutputDir.exists())
             fileOutputDir.mkdirs()
@@ -81,9 +82,9 @@ class Dumper(private val pkg: String) {
         return log
     }
 
-    private fun fixDumpFile(fixerPath: String, archELF: Arch, outputFile: File) : String {
+    private fun fixDumpFile(fixerPath: String, archELF: Arch, outputFile: File): String {
         if (archELF == Arch.UNKNOWN)
-            return "";
+            return ""
 
         val log = StringBuilder()
         log.appendLine("Fixing...")
@@ -110,7 +111,8 @@ class Dumper(private val pkg: String) {
      *
      * @param ctx pass null if using root, vice versa
      * @param autoFix if `true` the dumped file will be fixed after dumping
-     * @param flagCheck if `true` the dumped file will be checked for flags/
+     * @param fixerPath ELFixer path
+     * @param flagCheck check for flags r-xp in file
      * @return log of the dump
      */
     fun dumpFile(ctx: Context?, autoFix: Boolean, fixerPath: String, flagCheck: Boolean): String {
@@ -146,7 +148,7 @@ class Dumper(private val pkg: String) {
 
             if (ctx == null)
                 log.appendLine(dumpFileRoot(autoFix, fixerPath))
-             else
+            else
                 log.appendLine(dumpFileNonRoot(ctx, autoFix, fixerPath))
 
             log.appendLine("Dump Success")
@@ -158,33 +160,17 @@ class Dumper(private val pkg: String) {
         return log.toString()
     }
 
-    private fun writeChannelIntoFile(inputChannel: FileChannel, file: File) {
-
-        val outputStream = file.outputStream()
-
-        var bytesWritten = 0
-        val buffer = ByteBuffer.allocate(1024)
-        while (bytesWritten < mem.size) {
-            val bytesReaded = inputChannel.read(buffer, mem.sAddress + bytesWritten)
-            outputStream.write(buffer.array(), 0, bytesReaded)
-            buffer.clear()
-            bytesWritten += bytesReaded
-        }
-
-        outputStream.flush()
-        outputStream.closeStreamQuietly()
-        inputChannel.close()
-    }
 
     /**
      * Parsing the memory map
      *
-     * @throws FileNotFoundException if required file is not found in memory map
+     * @throws FileNotFoundException failed to open /proc/{pid}/maps
+     * @throws RuntimeException start or end address is not found
      */
     private fun parseMap(checkFlag: Boolean): Pair<Long, Long> {
         val files = File("/proc/${mem.pid}/maps")
         if (!files.exists()) {
-            throw Exception("Failed To Open : ${files.path}")
+            throw FileNotFoundException("Failed To Open : ${files.path}")
         }
         val lines = files.readLines()
 
@@ -199,14 +185,14 @@ class Dumper(private val pkg: String) {
             } else {
                 map.getPath().contains(file)
             }
-        } ?: throw Exception("Unable find baseAddress of $file")
+        } ?: throw RuntimeException("Unable find baseAddress of $file")
 
         val mapStart = MapLinux(lineStart)
 
         val lineEnd = lines.findLast {
             val map = MapLinux(it)
             mapStart.getInode() == map.getInode()
-        } ?: throw Exception("Unable find endAddress of $file")
+        } ?: throw RuntimeException("Unable find endAddress of $file")
 
         val mapEnd = MapLinux(lineEnd)
         return Pair(mapStart.getStartAddress(), mapEnd.getEndAddress())
