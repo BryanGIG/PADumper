@@ -31,14 +31,7 @@ class Dumper(private val pkg: String) {
         if (!outputDir.exists())
             outputFile.createNewFile()
 
-        val inputChannel = RandomAccessFile("/proc/${mem.pid}/mem", "r").channel
-
-        inputChannel.copyToFile(mem.sAddress, mem.size, outputFile)
-
-        if (autoFix) {
-            val archELF = Fixer.getArchELF(inputChannel, mem)
-            log.appendLine(fixDumpFile(fixerPath, archELF, outputFile))
-        }
+        dump(autoFix, fixerPath, outputFile, log)
 
         log.appendLine("Output: ${outputFile.parent}")
         return log
@@ -55,14 +48,7 @@ class Dumper(private val pkg: String) {
         if (!outputDir.exists())
             outputFile.createNewFile()
 
-        val inputChannel = RandomAccessFile("/proc/${mem.pid}/mem", "r").channel
-
-        inputChannel.copyToFile(mem.sAddress, mem.size, outputFile)
-
-        if (autoFix) {
-            val archELF = Fixer.getArchELF(inputChannel, mem)
-            log.appendLine(fixDumpFile(fixerPath, archELF, outputFile))
-        }
+        dump(autoFix, fixerPath, outputFile, log)
 
         val fileOutPath = listOf(
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
@@ -82,6 +68,18 @@ class Dumper(private val pkg: String) {
         return log
     }
 
+    private fun dump(autoFix: Boolean,fixerPath: String, outputFile: File, outLog: StringBuilder) {
+
+        val inputChannel = RandomAccessFile("/proc/${mem.pid}/mem", "r").channel
+
+        inputChannel.copyToFile(mem.sAddress, mem.size, outputFile)
+
+        if (autoFix) {
+            val archELF = Fixer.getArchELF(inputChannel, mem)
+            outLog.appendLine(fixDumpFile(fixerPath, archELF, outputFile))
+        }
+        inputChannel.close()
+    }
     private fun fixDumpFile(fixerPath: String, archELF: Arch, outputFile: File): String {
         if (archELF == Arch.UNKNOWN)
             return ""

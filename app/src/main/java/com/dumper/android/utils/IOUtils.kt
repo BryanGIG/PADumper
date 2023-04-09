@@ -19,5 +19,4 @@ fun FileChannel.copyToFile(startPos: Long, byteSize: Long, outputFile: File) {
 
     outputStream.flush()
     outputStream.closeStreamQuietly()
-    close()
 }
