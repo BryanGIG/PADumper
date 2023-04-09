@@ -10,9 +10,11 @@ import android.os.Messenger
 import android.os.RemoteException
 import android.util.Log
 import com.dumper.android.dumper.Dumper
+import com.dumper.android.dumper.OutputHandler
 import com.dumper.android.dumper.process.Process
 import com.dumper.android.utils.TAG
 import com.topjohnwu.superuser.ipc.RootService
+
 
 class RootServices : RootService(), Handler.Callback {
     override fun onBind(intent: Intent): IBinder {
@@ -20,6 +22,7 @@ class RootServices : RootService(), Handler.Callback {
         val m = Messenger(h)
         return m.binder
     }
+
 
     override fun handleMessage(msg: Message): Boolean {
         val reply = Message.obtain()
@@ -30,12 +33,18 @@ class RootServices : RootService(), Handler.Callback {
                 val process = Process.getAllProcess(this, true)
                 reply.what = MSG_GET_PROCESS_LIST
                 data.putParcelableArrayList(LIST_ALL_PROCESS, process)
+
+                reply.data = data
+                try {
+                    msg.replyTo.send(reply)
+                } catch (e: RemoteException) {
+                    Log.e(TAG, "Remote error", e)
+                }
             }
 
             MSG_DUMP_PROCESS -> {
+                val outputHandler = OutputHandler(msg, reply, MSG_DUMP_PROCESS)
                 val requestData = msg.data
-                reply.what = MSG_DUMP_PROCESS
-                val logOutput = StringBuilder()
                 val process = requestData.getString(PROCESS_NAME)
                 val listFile = requestData.getStringArray(LIST_FILE)
                 val isFlagCheck = requestData.getBoolean(IS_FLAG_CHECK, false)
@@ -45,26 +54,23 @@ class RootServices : RootService(), Handler.Callback {
                     val dumper = Dumper(process)
                     for (file in listFile) {
                         dumper.file = file
-                        logOutput.appendLine(
-                            dumper.dumpFile(null, isAutoFix, fixerPath, isFlagCheck)
-                        )
+                        dumper.dumpFile(null, isAutoFix, fixerPath, isFlagCheck, outputHandler)
                     }
-                    data.putString(DUMP_LOG, logOutput.toString())
                 } else {
-                    data.putString(DUMP_LOG, "[ERROR] Data Error!")
+                    outputHandler.appendError("Data Error!")
                 }
             }
             else -> {
                 data.putString(DUMP_LOG, "[ERROR] Unknown command")
+                reply.data = data
+                try {
+                    msg.replyTo.send(reply)
+                } catch (e: RemoteException) {
+                    Log.e(TAG, "Remote error", e)
+                }
             }
         }
 
-        reply.data = data
-        try {
-            msg.replyTo.send(reply)
-        } catch (e: RemoteException) {
-            Log.e(TAG, "Remote error", e)
-        }
         return false
     }
 

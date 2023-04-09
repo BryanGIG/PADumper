@@ -36,6 +36,7 @@ import com.dumper.android.core.RootServices.Companion.PROCESS_NAME
 import com.dumper.android.databinding.ActivityMainBinding
 import com.dumper.android.dumper.Dumper
 import com.dumper.android.dumper.Fixer
+import com.dumper.android.dumper.OutputHandler
 import com.dumper.android.dumper.process.Process
 import com.dumper.android.messager.MSGConnection
 import com.dumper.android.messager.MSGReceiver
@@ -138,17 +139,11 @@ class MainActivity : AppCompatActivity() {
             remoteMessenger?.send(message)
         } else {
             val dumper = Dumper(process)
+            val outHandler = OutputHandler(console)
 
             dumpFile.forEach {
                 dumper.file = it
-
-                console.appendLine(
-                    try {
-                        dumper.dumpFile(this, autoFix, soFixerPath, flagCheck)
-                    } catch (e: Exception) {
-                        "[ERROR] ${e.stackTraceToString()}"
-                    }
-                )
+                dumper.dumpFile(this, autoFix, soFixerPath, flagCheck, outHandler)
             }
         }
     }

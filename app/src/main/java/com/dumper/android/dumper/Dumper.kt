@@ -16,11 +16,9 @@ class Dumper(private val pkg: String) {
     private val mem = Memory(pkg)
     var file: String = ""
 
-    private fun dumpFileRoot(autoFix: Boolean, fixerPath: String): StringBuilder {
+    private fun dumpFileRoot(autoFix: Boolean, fixerPath: String, outLog: OutputHandler) {
         if (Shell.isAppGrantedRoot() == false)
             throw IllegalAccessException("The method need to be executed from root services")
-
-        val log = StringBuilder()
 
         val outputDir = File("/sdcard/$DEFAULT_DIR/$pkg")
         if (!outputDir.exists())
@@ -31,14 +29,12 @@ class Dumper(private val pkg: String) {
         if (!outputDir.exists())
             outputFile.createNewFile()
 
-        dump(autoFix, fixerPath, outputFile, log)
+        dump(autoFix, fixerPath, outputFile, outLog)
 
-        log.appendLine("Output: ${outputFile.parent}")
-        return log
+        outLog.appendLine("Output: ${outputFile.parent}")
     }
 
-    private fun dumpFileNonRoot(ctx: Context, autoFix: Boolean, fixerPath: String): StringBuilder {
-        val log = StringBuilder()
+    private fun dumpFileNonRoot(ctx: Context, autoFix: Boolean, fixerPath: String, outLog: OutputHandler) {
 
         val outputDir = File(ctx.filesDir, "temp")
         if (!outputDir.exists())
@@ -48,7 +44,7 @@ class Dumper(private val pkg: String) {
         if (!outputDir.exists())
             outputFile.createNewFile()
 
-        dump(autoFix, fixerPath, outputFile, log)
+        dump(autoFix, fixerPath, outputFile, outLog)
 
         val fileOutPath = listOf(
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
@@ -60,15 +56,14 @@ class Dumper(private val pkg: String) {
             fileOutputDir.mkdirs()
 
         outputDir.copyRecursively(fileOutputDir, true, onError = { file, exc ->
-            log.appendLine("[ERROR] Failed to copy: ${file.name}\n${exc.stackTraceToString()}")
+            outLog.appendLine("[ERROR] Failed to copy: ${file.name}\n${exc.stackTraceToString()}")
             OnErrorAction.TERMINATE
         })
 
-        log.appendLine("Output: $fileOutputDir")
-        return log
+        outLog.appendLine("Output: $fileOutputDir")
     }
 
-    private fun dump(autoFix: Boolean,fixerPath: String, outputFile: File, outLog: StringBuilder) {
+    private fun dump(autoFix: Boolean,fixerPath: String, outputFile: File, outLog: OutputHandler) {
 
         val inputChannel = RandomAccessFile("/proc/${mem.pid}/mem", "r").channel
 
@@ -76,16 +71,16 @@ class Dumper(private val pkg: String) {
 
         if (autoFix) {
             val archELF = Fixer.getArchELF(inputChannel, mem)
-            outLog.appendLine(fixDumpFile(fixerPath, archELF, outputFile))
+            fixDumpFile(fixerPath, archELF, outputFile, outLog)
         }
         inputChannel.close()
     }
-    private fun fixDumpFile(fixerPath: String, archELF: Arch, outputFile: File): String {
-        if (archELF == Arch.UNKNOWN)
-            return ""
 
-        val log = StringBuilder()
-        log.appendLine("Fixing...")
+    private fun fixDumpFile(fixerPath: String, archELF: Arch, outputFile: File, outLog: OutputHandler) {
+        if (archELF == Arch.UNKNOWN)
+            return
+
+        outLog.appendLine("Fixing...")
 
         val fixerELF = fixerPath + when (archELF) {
             Arch.ARCH_32BIT -> "32"
@@ -96,12 +91,11 @@ class Dumper(private val pkg: String) {
         val fixer = Fixer.fixDump(fixerELF, outputFile, mem.sAddress.toHex())
         // Check output fixer and error fixer
         if (fixer.first.isNotEmpty()) {
-            log.appendLine("Fixer output : \n${fixer.first.joinToString("\n")}")
+            outLog.appendLine("Fixer output : \n${fixer.first.joinToString("\n")}")
         }
         if (fixer.second.isNotEmpty()) {
-            log.appendLine("Fixer error : \n${fixer.second.joinToString("\n")}")
+            outLog.appendLine("Fixer error : \n${fixer.second.joinToString("\n")}")
         }
-        return log.toString()
     }
 
     /**
@@ -113,49 +107,47 @@ class Dumper(private val pkg: String) {
      * @param flagCheck check for flags r-xp in file
      * @return log of the dump
      */
-    fun dumpFile(ctx: Context?, autoFix: Boolean, fixerPath: String, flagCheck: Boolean): String {
-        val log = StringBuilder()
+    fun dumpFile(ctx: Context?, autoFix: Boolean, fixerPath: String, flagCheck: Boolean, outLog: OutputHandler) {
         try {
             mem.pid = Process.getProcessID(pkg) ?: throw Exception("Process not found!")
 
-            log.appendLine("PID : ${mem.pid}")
-            log.appendLine("FILE : $file")
+            outLog.appendLine("PID : ${mem.pid}")
+            outLog.appendLine("FILE : $file")
 
             val map = parseMap(flagCheck)
             mem.sAddress = map.first
             mem.eAddress = map.second
             mem.size = mem.eAddress - mem.sAddress
 
-            log.appendLine("Start Address : ${mem.sAddress.toHex()}")
+            outLog.appendLine("Start Address : ${mem.sAddress.toHex()}")
             if (mem.sAddress < 1L) {
-                log.appendLine("[ERROR] invalid Start Address!")
-                return log.toString()
+                outLog.appendError("[ERROR] invalid Start Address!")
+                return 
             }
 
-            log.appendLine("End Address : ${mem.eAddress.toHex()}")
+            outLog.appendLine("End Address : ${mem.eAddress.toHex()}")
             if (mem.eAddress < 1L) {
-                log.appendLine("[ERROR] invalid End Address!")
-                return log.toString()
+                outLog.appendError("[ERROR] invalid End Address!")
+                return 
             }
 
-            log.appendLine("Size Memory : ${mem.size}")
+            outLog.appendLine("Size Memory : ${mem.size}")
             if (mem.size < 1L) {
-                log.appendLine("[ERROR] invalid memory size!")
-                return log.toString()
+                outLog.appendError("[ERROR] invalid memory size!")
+                return
             }
 
             if (ctx == null)
-                log.appendLine(dumpFileRoot(autoFix, fixerPath))
+                dumpFileRoot(autoFix, fixerPath, outLog)
             else
-                log.appendLine(dumpFileNonRoot(ctx, autoFix, fixerPath))
+                dumpFileNonRoot(ctx, autoFix, fixerPath, outLog)
 
-            log.appendLine("Dump Success")
+            outLog.appendSuccess("Dump Success")
         } catch (e: Exception) {
-            log.appendLine("[ERROR] ${e.stackTraceToString()}")
+            outLog.appendLine("[ERROR] ${e.stackTraceToString()}")
             e.printStackTrace()
         }
-        log.appendLine("==========================")
-        return log.toString()
+        outLog.appendLine("==========================")
     }
 
 
