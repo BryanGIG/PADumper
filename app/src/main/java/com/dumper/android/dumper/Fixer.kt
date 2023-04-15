@@ -15,7 +15,7 @@ enum class Arch {
 object Fixer {
 
     private val ELFMAG =
-        byteArrayOf(0x7F.toByte(), 'E'.code.toByte(), 'L'.code.toByte(), 'F'.code.toByte())
+        byteArrayOf(0x7F, 'E'.code.toByte(), 'L'.code.toByte(), 'F'.code.toByte())
 
     /**
      * Extract SoFixer into filesDir and

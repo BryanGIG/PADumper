@@ -41,12 +41,11 @@ import com.dumper.android.dumper.process.Process
 import com.dumper.android.messager.MSGConnection
 import com.dumper.android.messager.MSGReceiver
 import com.dumper.android.ui.console.ConsoleViewModel
-import com.dumper.android.ui.memory.MemoryFragment
 import com.dumper.android.ui.memory.MemoryViewModel
 import com.topjohnwu.superuser.ipc.RootService
 
 class MainActivity : AppCompatActivity() {
-    lateinit var binding: ActivityMainBinding
+    private lateinit var binding: ActivityMainBinding
 
     var remoteMessenger: Messenger? = null
     private val receiver = Messenger(Handler(Looper.getMainLooper(), MSGReceiver(this)))
@@ -103,12 +102,7 @@ class MainActivity : AppCompatActivity() {
         } else {
             val processList = Process.getAllProcess(this, false)
 
-            val navController = binding.navHostFragmentActivityMain.getFragment<NavHostFragment>()
-            val fragments = navController.childFragmentManager.fragments
-
-            fragments.find { it is MemoryFragment }?.let { fragment ->
-                (fragment as MemoryFragment).showProcess(processList)
-            }
+            memory.showProcess(this, processList)
         }
     }
 

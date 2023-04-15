@@ -25,7 +25,7 @@ class Dumper(private val pkg: String) {
             outputDir.mkdirs()
 
         val outputFile =
-            File("${outputDir.absolutePath}/${mem.sAddress.toHex()}-${mem.eAddress.toHex()}-$file")
+            File(outputDir,"${mem.sAddress.toHex()}-${mem.eAddress.toHex()}-$file")
         if (!outputDir.exists())
             outputFile.createNewFile()
 
@@ -166,19 +166,14 @@ class Dumper(private val pkg: String) {
 
         val lineStart = lines.find {
             val map = MapLinux(it)
-            if (file.contains(".so")) {
-                if (checkFlag)
-                    map.getPerms().contains("r-xp") && map.getPath().contains(file)
-                else {
-                    map.getPath().contains(file)
-                }
+            return@find if (file.contains(".so") && checkFlag) {
+                map.getPerms().contains("r-xp") && map.getPath().contains(file)
             } else {
                 map.getPath().contains(file)
             }
         } ?: throw RuntimeException("Unable find baseAddress of $file")
 
         val mapStart = MapLinux(lineStart)
-
         val lineEnd = lines.findLast {
             val map = MapLinux(it)
             mapStart.getInode() == map.getInode()

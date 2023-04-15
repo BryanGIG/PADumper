@@ -44,12 +44,11 @@ class RootServices : RootService(), Handler.Callback {
 
             MSG_DUMP_PROCESS -> {
                 val outputHandler = OutputHandler(msg, reply, MSG_DUMP_PROCESS)
-                val requestData = msg.data
-                val process = requestData.getString(PROCESS_NAME)
-                val listFile = requestData.getStringArray(LIST_FILE)
-                val isFlagCheck = requestData.getBoolean(IS_FLAG_CHECK, false)
-                val fixerPath = requestData.getString(LIBRARY_DIR_NAME, "")
-                val isAutoFix = requestData.getBoolean(IS_FIX_NAME, false)
+                val process = msg.data.getString(PROCESS_NAME)
+                val listFile = msg.data.getStringArray(LIST_FILE)
+                val isFlagCheck = msg.data.getBoolean(IS_FLAG_CHECK, false)
+                val fixerPath = msg.data.getString(LIBRARY_DIR_NAME, "")
+                val isAutoFix = msg.data.getBoolean(IS_FIX_NAME, false)
                 if (process != null && listFile != null) {
                     val dumper = Dumper(process)
                     for (file in listFile) {

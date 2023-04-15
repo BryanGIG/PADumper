@@ -9,9 +9,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.dumper.android.core.MainActivity
 import com.dumper.android.databinding.FragmentMemoryBinding
-import com.dumper.android.dumper.process.ProcessData
 import com.dumper.android.ui.console.ConsoleViewModel
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 class MemoryFragment : Fragment() {
 
@@ -43,7 +41,7 @@ class MemoryFragment : Fragment() {
         }
 
         binding.selectApps.setOnClickListener {
-            getMainActivity().sendRequestAllProcess()
+            getMainActivity()?.sendRequestAllProcess()
         }
 
         binding.dumpButton.setOnClickListener {
@@ -64,7 +62,7 @@ class MemoryFragment : Fragment() {
             if (binding.metadata.isChecked)
                 listDump.add("global-metadata.dat")
 
-            getMainActivity().sendRequestDump(
+            getMainActivity()?.sendRequestDump(
                 process,
                 listDump.toTypedArray(),
                 binding.autoFix.isChecked,
@@ -82,25 +80,12 @@ class MemoryFragment : Fragment() {
         _binding = null
     }
 
-    fun showProcess(list: ArrayList<ProcessData>) {
-        list.sortBy { lists -> lists.appName }
-
-        val appNames = list.map { processData ->
-            val processName = processData.processName
-            if (processName.contains(":"))
-                "${processData.appName} (${processName.substringAfter(":")})"
-            else
-                processData.appName
+    private fun getMainActivity() : MainActivity? {
+        val activity = requireActivity()
+        return if (activity is MainActivity) {
+            activity
+        } else {
+            null
         }
-
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Select process")
-            .setSingleChoiceItems(appNames.toTypedArray(), -1) { dialog, which ->
-                memViewModel.selectedApps.value = list[which].processName
-                dialog.dismiss()
-            }
-            .show()
     }
-
-    private fun getMainActivity() = requireActivity() as MainActivity
 }
