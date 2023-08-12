@@ -49,15 +49,6 @@
 
 
         <CheckBox
-            android:id="@+id/flagCheck"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:checked="true"
-            android:text="@string/check_flag_address"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/libName" />
-
-        <CheckBox
             android:id="@+id/autoFix"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -65,7 +56,7 @@
             android:layout_marginTop="6dp"
             android:minHeight="48dp"
             android:text="@string/fix_elf_result"
-            app:layout_constraintTop_toBottomOf="@+id/flagCheck" />
+            app:layout_constraintTop_toBottomOf="@+id/libName" />
 
         <CheckBox
             android:id="@+id/metadata"

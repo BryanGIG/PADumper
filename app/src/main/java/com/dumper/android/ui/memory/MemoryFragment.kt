@@ -65,8 +65,7 @@ class MemoryFragment : Fragment() {
             getMainActivity()?.sendRequestDump(
                 process,
                 listDump.toTypedArray(),
-                binding.autoFix.isChecked,
-                binding.flagCheck.isChecked
+                binding.autoFix.isChecked
             )
         }
         return binding.root

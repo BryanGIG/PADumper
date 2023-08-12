@@ -2,6 +2,7 @@ package com.dumper.android.dumper
 
 import android.content.Context
 import android.os.Environment
+import com.dumper.android.dumper.MemUtils.getArchELF
 import com.dumper.android.dumper.process.Process
 import com.dumper.android.utils.DEFAULT_DIR
 import com.dumper.android.utils.copyToFile
@@ -70,7 +71,7 @@ class Dumper(private val pkg: String) {
         inputChannel.copyToFile(mem.sAddress, mem.size, outputFile)
 
         if (autoFix) {
-            val archELF = Fixer.getArchELF(inputChannel, mem)
+            val archELF = getArchELF(inputChannel, mem)
             fixDumpFile(fixerPath, archELF, outputFile, outLog)
         }
         inputChannel.close()
@@ -104,17 +105,16 @@ class Dumper(private val pkg: String) {
      * @param ctx pass null if using root, vice versa
      * @param autoFix if `true` the dumped file will be fixed after dumping
      * @param fixerPath ELFixer path
-     * @param flagCheck check for flags r-xp in file
      * @return log of the dump
      */
-    fun dumpFile(ctx: Context?, autoFix: Boolean, fixerPath: String, flagCheck: Boolean, outLog: OutputHandler) {
+    fun dumpFile(ctx: Context?, autoFix: Boolean, fixerPath: String, outLog: OutputHandler) {
         try {
             mem.pid = Process.getProcessID(pkg) ?: throw Exception("Process not found!")
 
             outLog.appendLine("PID : ${mem.pid}")
             outLog.appendLine("FILE : $file")
 
-            val map = parseMap(flagCheck)
+            val map = parseMap()
             mem.sAddress = map.first
             mem.eAddress = map.second
             mem.size = mem.eAddress - mem.sAddress
@@ -157,29 +157,36 @@ class Dumper(private val pkg: String) {
      * @throws FileNotFoundException failed to open /proc/{pid}/maps
      * @throws RuntimeException start or end address is not found
      */
-    private fun parseMap(checkFlag: Boolean): Pair<Long, Long> {
+    private fun parseMap(): Pair<Long, Long> {
         val files = File("/proc/${mem.pid}/maps")
         if (!files.exists()) {
             throw FileNotFoundException("Failed To Open : ${files.path}")
         }
-        val lines = files.readLines()
+        var mapStart: MapParser? = null
+        var mapEnd: MapParser? = null
 
-        val lineStart = lines.find {
-            val map = MapLinux(it)
-            return@find if (file.contains(".so") && checkFlag) {
-                map.getPerms().contains("r-xp") && map.getPath().contains(file)
+        files.forEachLine {
+            val map = MapParser(it)
+            if (mapStart == null) {
+                if (file.contains(".so")) {
+                    if (map.getPath().contains(file) && MemUtils.isELF(mem.pid, map.getStartAddress())) {
+                        mapStart = map
+                    }
+                } else {
+                    if (map.getPath().contains(file)) {
+                        mapStart = map
+                    }
+                }
             } else {
-                map.getPath().contains(file)
+                if (mapStart!!.getInode() == map.getInode()) {
+                    mapEnd = map
+                }
             }
-        } ?: throw RuntimeException("Unable find baseAddress of $file")
+        }
 
-        val mapStart = MapLinux(lineStart)
-        val lineEnd = lines.findLast {
-            val map = MapLinux(it)
-            mapStart.getInode() == map.getInode()
-        } ?: throw RuntimeException("Unable find endAddress of $file")
+        if (mapStart == null || mapEnd == null)
+            throw RuntimeException("Start or End Address not found!")
 
-        val mapEnd = MapLinux(lineEnd)
-        return Pair(mapStart.getStartAddress(), mapEnd.getEndAddress())
+        return Pair(mapStart!!.getStartAddress(), mapEnd!!.getEndAddress())
     }
 }

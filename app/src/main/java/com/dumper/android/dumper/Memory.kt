@@ -1,6 +1,6 @@
 package com.dumper.android.dumper
 
-class MapLinux(str: String) {
+class MapParser(str: String) {
     
     private var address = ""
     private var perms = ""
@@ -58,11 +58,7 @@ class MapLinux(str: String) {
     }
 
     fun isValid(): Boolean {
-        return getStartAddress() != 0L && getEndAddress() != 0L
-    }
-
-    override fun toString(): String {
-        return "MapLinux(address='$address', perms='$perms', offset='$offset', dev='$dev', inode='$inode', path='$path')"
+        return getStartAddress() > 0L || getEndAddress() > 0L
     }
 }
 

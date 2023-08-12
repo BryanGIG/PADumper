@@ -46,14 +46,13 @@ class RootServices : RootService(), Handler.Callback {
                 val outputHandler = OutputHandler(msg, reply, MSG_DUMP_PROCESS)
                 val process = msg.data.getString(PROCESS_NAME)
                 val listFile = msg.data.getStringArray(LIST_FILE)
-                val isFlagCheck = msg.data.getBoolean(IS_FLAG_CHECK, false)
                 val fixerPath = msg.data.getString(LIBRARY_DIR_NAME, "")
                 val isAutoFix = msg.data.getBoolean(IS_FIX_NAME, false)
                 if (process != null && listFile != null) {
                     val dumper = Dumper(process)
                     for (file in listFile) {
                         dumper.file = file
-                        dumper.dumpFile(null, isAutoFix, fixerPath, isFlagCheck, outputHandler)
+                        dumper.dumpFile(null, isAutoFix, fixerPath, outputHandler)
                     }
                 } else {
                     outputHandler.appendError("Data Error!")
@@ -85,7 +84,6 @@ class RootServices : RootService(), Handler.Callback {
         const val LIST_ALL_PROCESS = "LIST_ALL_PROCESS"
         const val PROCESS_NAME = "PROCESS"
         const val LIST_FILE = "LIST_FILE"
-        const val IS_FLAG_CHECK = "IS_FLAG_CHECK"
         const val IS_FIX_NAME = "FIX_ELF"
     }
 }

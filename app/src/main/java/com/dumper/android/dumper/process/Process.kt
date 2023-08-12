@@ -41,19 +41,20 @@ object Process {
                 return finalAppsBundle
 
             for (line in dPID) {
-                if (line.name.isDigitsOnly()) {
-                    val comm = File("${line.path}/comm")
-                    val cmdline = File("${line.path}/cmdline")
-                    if (comm.exists() && cmdline.exists()) {
+                if (!line.name.isDigitsOnly())
+                    continue;
 
-                        val processName = comm.readText(Charsets.UTF_8)
-                        val processPkg = cmdline.readText(Charsets.UTF_8)
+                val comm = File("${line.path}/comm")
+                val cmdline = File("${line.path}/cmdline")
+                if (!comm.exists() || !cmdline.exists())
+                    continue;
 
-                        if (processPkg != "sh" && !processPkg.contains(BuildConfig.APPLICATION_ID)) {
-                            val data = ProcessData(processPkg, processName)
-                            finalAppsBundle.add(data)
-                        }
-                    }
+                val processName = comm.readText(Charsets.UTF_8)
+                val processPkg = cmdline.readText(Charsets.UTF_8)
+
+                if (processPkg != "sh" && !processPkg.contains(BuildConfig.APPLICATION_ID)) {
+                    val data = ProcessData(processPkg, processName)
+                    finalAppsBundle.add(data)
                 }
             }
         }

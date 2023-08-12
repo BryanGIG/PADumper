@@ -27,7 +27,6 @@ import com.anggrayudi.storage.permission.PermissionReport
 import com.anggrayudi.storage.permission.PermissionResult
 import com.dumper.android.R
 import com.dumper.android.core.RootServices.Companion.IS_FIX_NAME
-import com.dumper.android.core.RootServices.Companion.IS_FLAG_CHECK
 import com.dumper.android.core.RootServices.Companion.LIBRARY_DIR_NAME
 import com.dumper.android.core.RootServices.Companion.LIST_FILE
 import com.dumper.android.core.RootServices.Companion.MSG_DUMP_PROCESS
@@ -101,7 +100,6 @@ class MainActivity : AppCompatActivity() {
             remoteMessenger?.send(message)
         } else {
             val processList = Process.getAllProcess(this, false)
-
             memory.showProcess(this, processList)
         }
     }
@@ -109,8 +107,7 @@ class MainActivity : AppCompatActivity() {
     fun sendRequestDump(
         process: String,
         dumpFile: Array<String>,
-        autoFix: Boolean,
-        flagCheck: Boolean
+        autoFix: Boolean
     ) {
         val soFixerPath = "${filesDir.path}/SoFixer"
 
@@ -122,12 +119,12 @@ class MainActivity : AppCompatActivity() {
             message.data.apply {
                 putString(PROCESS_NAME, process)
                 putStringArray(LIST_FILE, dumpFile)
-                putBoolean(IS_FLAG_CHECK, flagCheck)
                 if (autoFix) {
                     putBoolean(IS_FIX_NAME, true)
                     putString(LIBRARY_DIR_NAME, soFixerPath)
                 }
             }
+
 
             message.replyTo = receiver
             remoteMessenger?.send(message)
@@ -137,7 +134,7 @@ class MainActivity : AppCompatActivity() {
 
             dumpFile.forEach {
                 dumper.file = it
-                dumper.dumpFile(this, autoFix, soFixerPath, flagCheck, outHandler)
+                dumper.dumpFile(this, autoFix, soFixerPath, outHandler)
             }
         }
     }

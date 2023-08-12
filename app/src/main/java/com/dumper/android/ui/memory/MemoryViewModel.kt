@@ -14,7 +14,7 @@ class MemoryViewModel : ViewModel() {
 
 
     fun showProcess(ctx: Context, list: ArrayList<ProcessData>) {
-        list.sortBy { lists -> lists.appName }
+        list.sortBy { it.appName }
 
         val appNames = list.map { processData ->
             val processName = processData.processName
