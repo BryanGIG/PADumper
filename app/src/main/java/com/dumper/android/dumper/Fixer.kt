@@ -1,32 +1,38 @@
 package com.dumper.android.dumper
 
 import android.content.Context
-import com.topjohnwu.superuser.Shell
 import java.io.File
 
 
-enum class Arch {
-    UNKNOWN,
-    ARCH_32BIT,
-    ARCH_64BIT
+enum class Arch(val value: String) {
+    UNKNOWN("Unknown"),
+    ARCH_32BIT("armeabi-v7a"),
+    ARCH_64BIT("arm64-v8a")
 }
 object Fixer {
 
 
     /**
-     * Extract SoFixer into filesDir and
+     * Extract folder assets into filesDir and
      * set permissions to 777 so the file can be executed
      */
     fun extractLibs(ctx: Context) {
-        val libs = ctx.assets.list("SoFixer")
-        libs?.forEach { lib ->
-            ctx.assets.open("SoFixer/$lib").use { input ->
-                val out = File(ctx.filesDir, lib)
-                if (!out.exists()) {
-                    input.copyTo(out.outputStream())
-                    Shell.cmd("chmod 777 ${out.absolutePath}").exec()
+        val filesDir = ctx.filesDir
+        val list = listOf("armeabi-v7a", "arm64-v8a")
+        list.forEach { arch ->
+
+            val archDir = File(filesDir, arch)
+            if (!archDir.exists())
+                archDir.mkdirs()
+
+            ctx.assets.list(arch)
+                ?.forEach { v ->
+                    val file = File(archDir, v)
+                    if (!file.exists()) {
+                        ctx.assets.open("$arch/$v").copyTo(file.outputStream())
+                        file.setExecutable(true, false)
+                    }
                 }
-            }
         }
     }
 
@@ -38,7 +44,8 @@ object Fixer {
      * @return pair of results inputStream, errorStream
      */
     fun fixDump(
-        fixerPath: String,
+        filesDir: String,
+        arch: Arch,
         dumpFile: File,
         startAddress: String
     ): Pair<List<String>, List<String>> {
@@ -47,12 +54,9 @@ object Fixer {
         
         val proc = ProcessBuilder(
             listOf(
-                fixerPath,
-                "-s",
+                "$filesDir/${arch.value}/fixer",
                 dumpFile.path,
-                "-o",
                 "${dumpFile.parent}/${dumpFile.nameWithoutExtension}_fix.${dumpFile.extension}",
-                "-m",
                 "0x$startAddress"
             )
         )

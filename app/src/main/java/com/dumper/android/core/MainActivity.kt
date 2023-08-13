@@ -109,7 +109,7 @@ class MainActivity : AppCompatActivity() {
         dumpFile: Array<String>,
         autoFix: Boolean
     ) {
-        val soFixerPath = "${filesDir.path}/SoFixer"
+        val soFixerPath = filesDir.path
 
         Toast.makeText(this, "Please wait...", Toast.LENGTH_SHORT).show()
 
@@ -134,7 +134,7 @@ class MainActivity : AppCompatActivity() {
 
             dumpFile.forEach {
                 dumper.file = it
-                dumper.dumpFile(this, autoFix, soFixerPath, outHandler)
+                dumper.dumpFile(this, autoFix, null, outHandler)
             }
         }
     }

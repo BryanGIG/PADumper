@@ -2,10 +2,11 @@ package com.dumper.android.dumper
 
 import android.content.Context
 import android.os.Environment
-import com.dumper.android.dumper.MemUtils.getArchELF
 import com.dumper.android.dumper.process.Process
 import com.dumper.android.utils.DEFAULT_DIR
 import com.dumper.android.utils.copyToFile
+import com.dumper.android.utils.getArchELF
+import com.dumper.android.utils.isELF
 import com.dumper.android.utils.removeNullChar
 import com.dumper.android.utils.toHex
 import com.topjohnwu.superuser.Shell
@@ -35,7 +36,7 @@ class Dumper(private val pkg: String) {
         outLog.appendLine("Output: ${outputFile.parent}")
     }
 
-    private fun dumpFileNonRoot(ctx: Context, autoFix: Boolean, fixerPath: String, outLog: OutputHandler) {
+    private fun dumpFileNonRoot(ctx: Context, autoFix: Boolean, outLog: OutputHandler) {
 
         val outputDir = File(ctx.filesDir, "temp")
         if (!outputDir.exists())
@@ -45,7 +46,7 @@ class Dumper(private val pkg: String) {
         if (!outputDir.exists())
             outputFile.createNewFile()
 
-        dump(autoFix, fixerPath, outputFile, outLog)
+        dump(autoFix, ctx.filesDir.absolutePath, outputFile, outLog)
 
         val fileOutPath = listOf(
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
@@ -83,13 +84,7 @@ class Dumper(private val pkg: String) {
 
         outLog.appendLine("Fixing...")
 
-        val fixerELF = fixerPath + when (archELF) {
-            Arch.ARCH_32BIT -> "32"
-            Arch.ARCH_64BIT -> "64"
-            else -> "" //just to disable the warning
-        }
-
-        val fixer = Fixer.fixDump(fixerELF, outputFile, mem.sAddress.toHex())
+        val fixer = Fixer.fixDump(fixerPath, archELF, outputFile, mem.sAddress.toHex())
         // Check output fixer and error fixer
         if (fixer.first.isNotEmpty()) {
             outLog.appendLine("Fixer output : \n${fixer.first.joinToString("\n")}")
@@ -107,7 +102,7 @@ class Dumper(private val pkg: String) {
      * @param fixerPath ELFixer path
      * @return log of the dump
      */
-    fun dumpFile(ctx: Context?, autoFix: Boolean, fixerPath: String, outLog: OutputHandler) {
+    fun dumpFile(ctx: Context?, autoFix: Boolean, fixerPath: String?, outLog: OutputHandler) {
         try {
             mem.pid = Process.getProcessID(pkg) ?: throw Exception("Process not found!")
 
@@ -137,10 +132,14 @@ class Dumper(private val pkg: String) {
                 return
             }
 
-            if (ctx == null)
+
+            if (ctx == null) {
+                if (fixerPath == null)
+                    throw Exception("Fixer path is null!")
                 dumpFileRoot(autoFix, fixerPath, outLog)
+            }
             else
-                dumpFileNonRoot(ctx, autoFix, fixerPath, outLog)
+                dumpFileNonRoot(ctx, autoFix, outLog)
 
             outLog.appendSuccess("Dump Success")
         } catch (e: Exception) {
@@ -169,7 +168,7 @@ class Dumper(private val pkg: String) {
             val map = MapParser(it)
             if (mapStart == null) {
                 if (file.contains(".so")) {
-                    if (map.getPath().contains(file) && MemUtils.isELF(mem.pid, map.getStartAddress())) {
+                    if (map.getPath().contains(file) && isELF(mem.pid, map.getStartAddress())) {
                         mapStart = map
                     }
                 } else {
