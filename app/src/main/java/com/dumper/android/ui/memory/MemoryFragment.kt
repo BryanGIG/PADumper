@@ -32,12 +32,21 @@ class MemoryFragment : Fragment() {
             binding.processText.editText?.setText(it)
         }
 
-        memViewModel.selectedApps.observe(viewLifecycleOwner) {
-            binding.processText.editText?.setText(it)
-        }
+            selectedApps.observe(viewLifecycleOwner) {
+                binding.processText.editText?.setText(it)
+            }
 
-        memViewModel.libName.observe(viewLifecycleOwner) {
-            binding.libName.editText?.setText(it)
+            libName.observe(viewLifecycleOwner) {
+                binding.libName.editText?.setText(it)
+            }
+
+            isFixELF.observe(viewLifecycleOwner) {
+                binding.autoFix.isChecked = it
+            }
+
+            isDumpMetadata.observe(viewLifecycleOwner) {
+                binding.metadata.isChecked = it
+            }
         }
 
         binding.selectApps.setOnClickListener {
@@ -74,12 +83,22 @@ class MemoryFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         //Save state into view-models before destroying view
-        memViewModel.packageName.value = binding.processText.editText?.text.toString()
-        memViewModel.libName.value = binding.libName.editText?.text.toString()
+        with(memViewModel) {
+            packageName.value = binding.processText.editText?.text.toString()
+            libName.value = binding.libName.editText?.text.toString()
+            isFixELF.value = binding.autoFix.isChecked
+            isDumpMetadata.value = binding.metadata.isChecked
+        }
+
+        with(sharedPref!!.edit()) {
+            putString("packageName", binding.processText.editText?.text.toString())
+            putString("libName", binding.libName.editText?.text.toString())
+            commit()
+        }
         _binding = null
     }
 
-    private fun getMainActivity() : MainActivity? {
+    private fun getMainActivity(): MainActivity? {
         val activity = requireActivity()
         return if (activity is MainActivity) {
             activity

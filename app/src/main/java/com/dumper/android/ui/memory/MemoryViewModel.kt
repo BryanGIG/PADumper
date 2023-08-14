@@ -11,6 +11,8 @@ class MemoryViewModel : ViewModel() {
     val selectedApps = MutableLiveData<String>()
     val packageName = MutableLiveData<String>()
     val libName = MutableLiveData<String>()
+    val isFixELF = MutableLiveData<Boolean>()
+    val isDumpMetadata = MutableLiveData<Boolean>()
 
 
     fun showProcess(ctx: Context, list: ArrayList<ProcessData>) {
