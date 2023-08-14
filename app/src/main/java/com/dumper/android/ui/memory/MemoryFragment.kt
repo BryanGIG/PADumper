@@ -1,5 +1,6 @@
 package com.dumper.android.ui.memory
 
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -21,16 +22,28 @@ class MemoryFragment : Fragment() {
 
     private val memViewModel: MemoryViewModel by activityViewModels()
     private val console: ConsoleViewModel by activityViewModels()
+    private val sharedPref by lazy { activity?.getPreferences(Context.MODE_PRIVATE) }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentMemoryBinding.inflate(inflater, container, false)
+        //save out package name into sharedpreferences
 
-        memViewModel.packageName.observe(viewLifecycleOwner) {
-            binding.processText.editText?.setText(it)
+        with(sharedPref!!) {
+            getString("libName", null)?.let {
+                binding.libName.editText!!.setText(it)
+            }
+            getString("packageName", null)?.let {
+                binding.processText.editText!!.setText(it)
+            }
         }
+
+        with(memViewModel) {
+            packageName.observe(viewLifecycleOwner) {
+                binding.processText.editText?.setText(it)
+            }
 
             selectedApps.observe(viewLifecycleOwner) {
                 binding.processText.editText?.setText(it)
@@ -71,11 +84,10 @@ class MemoryFragment : Fragment() {
             if (binding.metadata.isChecked)
                 listDump.add("global-metadata.dat")
 
-            getMainActivity()?.sendRequestDump(
-                process,
-                listDump.toTypedArray(),
-                binding.autoFix.isChecked
-            )
+            with(getMainActivity()!!) {
+                sendRequestDump(process, listDump.toTypedArray(), binding.autoFix.isChecked)
+                toConsoleFragment()
+            }
         }
         return binding.root
     }
