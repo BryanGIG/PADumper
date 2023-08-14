@@ -15,6 +15,7 @@ import android.view.MenuItem
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.navigation.NavOptions
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
@@ -111,8 +112,6 @@ class MainActivity : AppCompatActivity() {
     ) {
         val soFixerPath = filesDir.path
 
-        Toast.makeText(this, "Please wait...", Toast.LENGTH_SHORT).show()
-
         if (intent.getBooleanExtra("IS_ROOT", false)) {
             val message = Message.obtain(null, MSG_DUMP_PROCESS)
 
@@ -134,7 +133,7 @@ class MainActivity : AppCompatActivity() {
 
             dumpFile.forEach {
                 dumper.file = it
-                dumper.dumpFile(this, autoFix, null, outHandler)
+                outHandler.finish(dumper.dumpFile(this, autoFix, null, outHandler))
             }
         }
     }
@@ -164,7 +163,19 @@ class MainActivity : AppCompatActivity() {
             AppBarConfiguration(setOf(R.id.nav_memory_fragment, R.id.nav_console_fragment))
 
         setupActionBarWithNavController(navController, appBarConfiguration)
+
         binding.navView.setupWithNavController(navController)
+    }
+
+    fun toConsoleFragment() {
+        val navController =
+            binding.navHostFragmentActivityMain.getFragment<NavHostFragment>().navController
+
+        val navOptions = NavOptions.Builder()
+            .setPopUpTo(R.id.nav_memory_fragment, true)
+            .build()
+
+        navController.navigate(R.id.nav_console_fragment, null, navOptions)
     }
 
     private fun setupRootService() {

@@ -2,10 +2,12 @@ package com.dumper.android.ui.console
 
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.dumper.android.ui.Event
 
 class ConsoleViewModel : ViewModel() {
 
     val console = MutableLiveData("")
+    val finishCode = MutableLiveData<Event<Int>>()
 
     fun append(text: String) {
         console.value = console.value + text
@@ -39,4 +41,7 @@ class ConsoleViewModel : ViewModel() {
         appendLine("[SUCCESS] $text")
     }
 
+    fun finish(ret: Int) {
+        finishCode.value = Event(ret)
+    }
 }

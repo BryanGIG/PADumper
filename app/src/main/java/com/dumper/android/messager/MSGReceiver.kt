@@ -2,7 +2,6 @@ package com.dumper.android.messager
 
 import android.os.Handler
 import android.os.Message
-import android.widget.Toast
 import com.dumper.android.core.MainActivity
 import com.dumper.android.core.RootServices
 import com.dumper.android.dumper.process.ProcessData
@@ -24,10 +23,16 @@ class MSGReceiver(private val activity: MainActivity) : Handler.Callback {
 
             RootServices.MSG_DUMP_PROCESS -> {
                 message.data.getString(RootServices.DUMP_LOG)?.let {
-                    activity.console.append(it)
-                    Toast.makeText(activity, "Dump Complete!", Toast.LENGTH_SHORT).show()
+                        activity.console.append(it)
+                    }
+            }
+
+            RootServices.MSG_DUMP_FINISH -> {
+                message.data.getInt(RootServices.DUMP_CODE, -1).let {
+                    activity.console.finish(it)
                 }
             }
+
         }
         return false
     }

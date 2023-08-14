@@ -35,6 +35,16 @@ class ConsoleFragment : Fragment() {
             }
         }
 
+        vm.finishCode.observe(viewLifecycleOwner) { event ->
+            event.getContentIfNotHandled()?.let {
+                if (it == 0) {
+                    Toast.makeText(requireContext(), "Dump success!", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(requireContext(), "Dump error!", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
         consoleBind.copyConsole.setOnClickListener {
             val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             val clip = ClipData.newPlainText("PADumper-Log", consoleBind.console.text)

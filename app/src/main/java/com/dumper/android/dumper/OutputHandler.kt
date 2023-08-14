@@ -17,6 +17,13 @@ class OutputHandler {
 
     private constructor()
 
+    /*
+     * This method is used to send message to client
+     * Use this method if you're on root services
+     * @param from: Message from client
+     * @param reply: Message to client
+     * @param what: What to reply
+    */
     constructor(from: Message, reply: Message, what: Int) : this() {
         isRoot = true
         this.from = from
@@ -24,6 +31,11 @@ class OutputHandler {
         this.what = what
     }
 
+    /*
+     * This method is used to append message to console
+     * Use this method if you're on non-root
+     * @param console: ConsoleViewModel to append
+    */
     constructor(console: ConsoleViewModel) : this() {
         isRoot = false
         this.console = console
@@ -42,6 +54,22 @@ class OutputHandler {
             }
         } else {
             console.append(str)
+        }
+    }
+
+    fun finish(code: Int) {
+        if (isRoot) {
+            val data = Bundle()
+            data.putInt(RootServices.DUMP_CODE, code)
+            reply.what = what
+            reply.data = data
+            try {
+                from.replyTo.send(reply)
+            } catch (e: RemoteException) {
+                Log.e(TAG, "Remote error", e)
+            }
+        } else {
+            console.finish(code)
         }
     }
 

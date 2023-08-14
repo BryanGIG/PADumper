@@ -26,8 +26,7 @@ class Dumper(private val pkg: String) {
         if (!outputDir.exists())
             outputDir.mkdirs()
 
-        val outputFile =
-            File(outputDir,"${mem.sAddress.toHex()}-${mem.eAddress.toHex()}-$file")
+        val outputFile = File(outputDir, "${mem.sAddress.toHex()}-${mem.eAddress.toHex()}-$file")
         if (!outputDir.exists())
             outputFile.createNewFile()
 
@@ -58,14 +57,14 @@ class Dumper(private val pkg: String) {
             fileOutputDir.mkdirs()
 
         outputDir.copyRecursively(fileOutputDir, true, onError = { file, exc ->
-            outLog.appendLine("[ERROR] Failed to copy: ${file.name}\n${exc.stackTraceToString()}")
+            outLog.appendError("Failed to copy: ${file.name}\n${exc.stackTraceToString()}")
             OnErrorAction.TERMINATE
         })
 
         outLog.appendLine("Output: $fileOutputDir")
     }
 
-    private fun dump(autoFix: Boolean,fixerPath: String, outputFile: File, outLog: OutputHandler) {
+    private fun dump(autoFix: Boolean, fixerPath: String, outputFile: File, outLog: OutputHandler) {
 
         val inputChannel = RandomAccessFile("/proc/${mem.pid}/mem", "r").channel
 
@@ -78,7 +77,12 @@ class Dumper(private val pkg: String) {
         inputChannel.close()
     }
 
-    private fun fixDumpFile(fixerPath: String, archELF: Arch, outputFile: File, outLog: OutputHandler) {
+    private fun fixDumpFile(
+        fixerPath: String,
+        archELF: Arch,
+        outputFile: File,
+        outLog: OutputHandler
+    ) {
         if (archELF == Arch.UNKNOWN)
             return
 
@@ -100,9 +104,9 @@ class Dumper(private val pkg: String) {
      * @param ctx pass null if using root, vice versa
      * @param autoFix if `true` the dumped file will be fixed after dumping
      * @param fixerPath ELFixer path
-     * @return log of the dump
+     * @return 0 if success, -1 if failed
      */
-    fun dumpFile(ctx: Context?, autoFix: Boolean, fixerPath: String?, outLog: OutputHandler) {
+    fun dumpFile(ctx: Context?, autoFix: Boolean, fixerPath: String?, outLog: OutputHandler): Int {
         try {
             mem.pid = Process.getProcessID(pkg) ?: throw Exception("Process not found!")
 
@@ -116,37 +120,34 @@ class Dumper(private val pkg: String) {
 
             outLog.appendLine("Start Address : ${mem.sAddress.toHex()}")
             if (mem.sAddress < 1L) {
-                outLog.appendError("[ERROR] invalid Start Address!")
-                return 
+                throw Exception("Invalid Start Address!")
             }
 
             outLog.appendLine("End Address : ${mem.eAddress.toHex()}")
             if (mem.eAddress < 1L) {
-                outLog.appendError("[ERROR] invalid End Address!")
-                return 
+                throw Exception("Invalid End Address!")
             }
 
             outLog.appendLine("Size Memory : ${mem.size}")
             if (mem.size < 1L) {
-                outLog.appendError("[ERROR] invalid memory size!")
-                return
+                throw Exception("Invalid memory size!")
             }
-
 
             if (ctx == null) {
                 if (fixerPath == null)
                     throw Exception("Fixer path is null!")
                 dumpFileRoot(autoFix, fixerPath, outLog)
-            }
-            else
+            } else
                 dumpFileNonRoot(ctx, autoFix, outLog)
 
-            outLog.appendSuccess("Dump Success")
+            outLog.appendLine("Dump Success")
+            outLog.appendLine("==========================")
+            return 0
         } catch (e: Exception) {
-            outLog.appendLine("[ERROR] ${e.stackTraceToString()}")
-            e.printStackTrace()
+            outLog.appendError(e.message ?: "Unknown Error")
         }
         outLog.appendLine("==========================")
+        return -1
     }
 
 
@@ -184,7 +185,7 @@ class Dumper(private val pkg: String) {
         }
 
         if (mapStart == null || mapEnd == null)
-            throw RuntimeException("Start or End Address not found!")
+            throw Exception("Start or End Address not found!")
 
         return Pair(mapStart!!.getStartAddress(), mapEnd!!.getEndAddress())
     }
