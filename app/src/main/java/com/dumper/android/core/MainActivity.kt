@@ -143,9 +143,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupStoragePermission() {
-        if (Build.VERSION.SDK_INT in 23..28) {
+        if (Build.VERSION.SDK_INT in Build.VERSION_CODES.M ..Build.VERSION_CODES.P) {
             permissionRequest.check()
-        } else if (Build.VERSION.SDK_INT == 29) {
+        } else if (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q) {
             storageHelper.requestStorageAccess()
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             if (!storageHelper.storage.isStorageAccessGranted(StorageId.PRIMARY)) {
