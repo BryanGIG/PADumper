@@ -19,7 +19,7 @@ object Process {
             getAllProcessNoRoot()
 
 
-    private fun getAllProcessRoot(ctx: Context): Array<ProcessData> {
+    private fun getAllProcessRoot(ctx: Context): List<ProcessData> {
         val activityManager = ctx.getSystemService(ACTIVITY_SERVICE) as ActivityManager
         return activityManager.runningAppProcesses
             .mapNotNull {
@@ -33,10 +33,10 @@ object Process {
                         null
                     }
                 }.getOrNull()
-            }.toTypedArray()
+            }
     }
 
-    private fun getAllProcessNoRoot(): Array<ProcessData> {
+    private fun getAllProcessNoRoot(): List<ProcessData> {
         return File("/proc")
             .listFiles().orEmpty()
             .filter { it.name.isDigitsOnly() }
@@ -54,7 +54,7 @@ object Process {
                 } else {
                     null
                 }
-            }.toTypedArray()
+            }
     }
 
     /**

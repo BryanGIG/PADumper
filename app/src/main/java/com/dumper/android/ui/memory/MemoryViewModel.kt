@@ -15,7 +15,7 @@ class MemoryViewModel : ViewModel() {
     val isFixELF = MutableLiveData<Boolean>()
     val isDumpMetadata = MutableLiveData<Boolean>()
 
-    fun showProcess(ctx: Context, list: Collection<ProcessData>) {
+    fun showProcess(ctx: Context, list: List<ProcessData>) {
         if (list.isEmpty()) {
             Toast.makeText(ctx, "No process found", Toast.LENGTH_SHORT).show()
             return

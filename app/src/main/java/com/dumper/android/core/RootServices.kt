@@ -33,7 +33,7 @@ class RootServices : RootService(), Handler.Callback {
                     Process.getAllProcess(this, true)
                 }.onSuccess { process ->
                     reply.what = MSG_GET_PROCESS_LIST
-                    data.putParcelableArray(LIST_ALL_PROCESS, process)
+                    data.putParcelableArray(LIST_ALL_PROCESS, process.toTypedArray())
                 }
 
                 reply.data = data
