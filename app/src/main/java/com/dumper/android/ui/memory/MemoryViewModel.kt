@@ -1,6 +1,7 @@
 package com.dumper.android.ui.memory
 
 import android.content.Context
+import android.widget.Toast
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.dumper.android.dumper.process.ProcessData
@@ -14,25 +15,29 @@ class MemoryViewModel : ViewModel() {
     val isFixELF = MutableLiveData<Boolean>()
     val isDumpMetadata = MutableLiveData<Boolean>()
 
-
-    fun showProcess(ctx: Context, list: ArrayList<ProcessData>) {
-        list.sortBy { it.appName }
-
-        val appNames = list.map { processData ->
-            val processName = processData.processName
-            if (processName.contains(":"))
-                "${processData.appName} (${processName.substringAfter(":")})"
-            else
-                processData.appName
+    fun showProcess(ctx: Context, list: Collection<ProcessData>) {
+        if (list.isEmpty()) {
+            Toast.makeText(ctx, "No process found", Toast.LENGTH_SHORT).show()
+            return
         }
+
+        val appNames = list.sortedBy { it.processName }
+        val appsTitle = appNames
+            .map { processData ->
+                val processName = processData.processName
+                if (processName.contains(":"))
+                    "${processData.appName} (${processName.substringAfter(":")})"
+                else
+                    processData.appName
+            }.toTypedArray()
 
         MaterialAlertDialogBuilder(ctx)
             .setTitle("Select process")
-            .setSingleChoiceItems(appNames.toTypedArray(), -1) { dialog, which ->
-                selectedApps.value = list[which].processName
+            .setSingleChoiceItems(appsTitle, -1
+            ) { dialog, idx ->
+                selectedApps.value = appNames[idx].processName
                 dialog.dismiss()
             }
             .show()
     }
-
 }
