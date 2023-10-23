@@ -7,6 +7,7 @@ import androidx.core.text.isDigitsOnly
 import com.dumper.android.BuildConfig
 import com.dumper.android.utils.getApplicationInfoCompact
 import com.dumper.android.utils.isInvalid
+import com.dumper.android.utils.removeNullChar
 import java.io.File
 
 object Process {
@@ -49,8 +50,8 @@ object Process {
                 if (!comm.exists() || !cmdline.exists())
                     continue;
 
-                val processName = comm.readText(Charsets.UTF_8)
-                val processPkg = cmdline.readText(Charsets.UTF_8)
+                val processName = comm.readText(Charsets.UTF_8).removeNullChar()
+                val processPkg = cmdline.readText(Charsets.UTF_8).removeNullChar()
 
                 if (processPkg != "sh" && !processPkg.contains(BuildConfig.APPLICATION_ID)) {
                     val data = ProcessData(processPkg, processName)
