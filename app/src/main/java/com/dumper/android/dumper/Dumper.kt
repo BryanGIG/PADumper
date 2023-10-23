@@ -3,12 +3,7 @@ package com.dumper.android.dumper
 import android.content.Context
 import android.os.Environment
 import com.dumper.android.dumper.process.Process
-import com.dumper.android.utils.DEFAULT_DIR
-import com.dumper.android.utils.copyToFile
-import com.dumper.android.utils.getArchELF
-import com.dumper.android.utils.isELF
-import com.dumper.android.utils.removeNullChar
-import com.dumper.android.utils.toHex
+import com.dumper.android.utils.*
 import com.topjohnwu.superuser.Shell
 import java.io.File
 import java.io.FileNotFoundException
@@ -18,63 +13,19 @@ class Dumper(private val pkg: String) {
     private val mem = Memory(pkg)
     var file: String = ""
 
-    private fun dumpFileRoot(autoFix: Boolean, fixerPath: String, outLog: OutputHandler) {
-        if (Shell.isAppGrantedRoot() == false)
-            throw IllegalAccessException("The method need to be executed from root services")
-
-        val outputDir = File("/sdcard/$DEFAULT_DIR/$pkg")
-        if (!outputDir.exists())
-            outputDir.mkdirs()
-
-        val outputFile = File(outputDir, "${mem.sAddress.toHex()}-${mem.eAddress.toHex()}-$file")
-        if (!outputDir.exists())
-            outputFile.createNewFile()
-
-        dump(autoFix, fixerPath, outputFile, outLog)
-
-        outLog.appendLine("Output: ${outputFile.parent}")
-    }
-
-    private fun dumpFileNonRoot(ctx: Context, autoFix: Boolean, outLog: OutputHandler) {
-
-        val outputDir = File(ctx.filesDir, "temp")
-        if (!outputDir.exists())
-            outputDir.mkdirs()
-
-        val outputFile = File(outputDir, "${mem.sAddress.toHex()}-${mem.eAddress.toHex()}-$file")
-        if (!outputDir.exists())
-            outputFile.createNewFile()
-
-        dump(autoFix, ctx.filesDir.absolutePath, outputFile, outLog)
-
-        val fileOutPath = listOf(
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-            DEFAULT_DIR,
-            pkg.removeNullChar()
-        )
-        val fileOutputDir = File(fileOutPath.joinToString(File.separator))
-        if (!fileOutputDir.exists())
-            fileOutputDir.mkdirs()
-
-        outputDir.copyRecursively(fileOutputDir, true, onError = { file, exc ->
-            outLog.appendError("Failed to copy: ${file.name}\n${exc.stackTraceToString()}")
-            OnErrorAction.TERMINATE
-        })
-
-        outLog.appendLine("Output: $fileOutputDir")
-    }
-
     private fun dump(autoFix: Boolean, fixerPath: String, outputFile: File, outLog: OutputHandler) {
 
-        val inputChannel = RandomAccessFile("/proc/${mem.pid}/mem", "r").channel
+        RandomAccessFile("/proc/${mem.pid}/mem", "r")
+            .channel
+            .use {
+                it.copyToFile(mem.sAddress, mem.size, outputFile)
 
-        inputChannel.copyToFile(mem.sAddress, mem.size, outputFile)
-
-        if (autoFix) {
-            val archELF = getArchELF(inputChannel, mem)
-            fixDumpFile(fixerPath, archELF, outputFile, outLog)
-        }
-        inputChannel.close()
+                if (autoFix) {
+                    val archELF = getArchELF(it, mem)
+                    fixDumpFile(fixerPath, archELF, outputFile, outLog)
+                }
+                it.close()
+            }
     }
 
     private fun fixDumpFile(
@@ -87,15 +38,15 @@ class Dumper(private val pkg: String) {
             return
 
         outLog.appendLine("Fixing...")
-
-        val fixer = Fixer.fixDump(fixerPath, archELF, outputFile, mem.sAddress.toHex())
-        // Check output fixer and error fixer
-        if (fixer.first.isNotEmpty()) {
-            outLog.appendLine("Fixer output : \n${fixer.first.joinToString("\n")}")
-        }
-        if (fixer.second.isNotEmpty()) {
-            outLog.appendLine("Fixer error : \n${fixer.second.joinToString("\n")}")
-        }
+        outLog.appendLine("Fixer output :")
+        Fixer.fixDump(fixerPath, archELF, outputFile, mem.sAddress.toHex(),
+            onSuccess = { input ->
+                outLog.append(input)
+            },
+            onError = { error ->
+                outLog.append(error)
+            }
+        )
     }
 
     /**
@@ -103,51 +54,64 @@ class Dumper(private val pkg: String) {
      *
      * @param ctx pass null if using root, vice versa
      * @param autoFix if `true` the dumped file will be fixed after dumping
-     * @param fixerPath ELFixer path
+     * @param outLog output handler
      * @return 0 if success, -1 if failed
      */
-    fun dumpFile(ctx: Context?, autoFix: Boolean, fixerPath: String?, outLog: OutputHandler): Int {
-        try {
-            mem.pid = Process.getProcessID(pkg) ?: throw Exception("Process not found!")
+    fun dumpFile(ctx: Context, autoFix: Boolean, outLog: OutputHandler) = runCatching {
+        mem.pid = Process.getProcessID(pkg) ?: throw Exception("Process not found!")
 
-            outLog.appendLine("PID : ${mem.pid}")
-            outLog.appendLine("FILE : $file")
+        outLog.appendLine("PID : ${mem.pid}")
+        outLog.appendLine("FILE : $file")
 
-            val map = parseMap()
-            mem.sAddress = map.first
-            mem.eAddress = map.second
-            mem.size = mem.eAddress - mem.sAddress
+        val map = parseMap()
+        mem.sAddress = map.first
+        mem.eAddress = map.second
+        mem.size = mem.eAddress - mem.sAddress
 
-            outLog.appendLine("Start Address : ${mem.sAddress.toHex()}")
-            if (mem.sAddress < 1L) {
-                throw Exception("Invalid Start Address!")
-            }
-
-            outLog.appendLine("End Address : ${mem.eAddress.toHex()}")
-            if (mem.eAddress < 1L) {
-                throw Exception("Invalid End Address!")
-            }
-
-            outLog.appendLine("Size Memory : ${mem.size}")
-            if (mem.size < 1L) {
-                throw Exception("Invalid memory size!")
-            }
-
-            if (ctx == null) {
-                if (fixerPath == null)
-                    throw Exception("Fixer path is null!")
-                dumpFileRoot(autoFix, fixerPath, outLog)
-            } else
-                dumpFileNonRoot(ctx, autoFix, outLog)
-
-            outLog.appendLine("Dump Success")
-            outLog.appendLine("==========================")
-            return 0
-        } catch (e: Exception) {
-            outLog.appendError(e.message ?: "Unknown Error")
+        outLog.appendLine("Start Address : ${mem.sAddress.toHex()}")
+        if (mem.sAddress < 1L) {
+            throw Exception("Invalid Start Address!")
         }
+
+        outLog.appendLine("End Address : ${mem.eAddress.toHex()}")
+        if (mem.eAddress < 1L) {
+            throw Exception("Invalid End Address!")
+        }
+
+        outLog.appendLine("Size Memory : ${mem.size}")
+        if (mem.size < 1L) {
+            throw Exception("Invalid memory size!")
+        }
+
+        val fileOutPath =
+            if (Shell.isAppGrantedRoot() == false) {
+                "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)}/$DEFAULT_DIR/$pkg"
+            } else {
+                "/sdcard/$DEFAULT_DIR/$pkg"
+            }
+
+        val outputDir = File(fileOutPath)
+        if (!outputDir.exists())
+            outputDir.mkdirs()
+
+        val outputFile = File(
+            outputDir,
+            "${mem.sAddress.toHex()}-${mem.eAddress.toHex()}-${mem.path.getFileName()}"
+        )
+        if (!outputDir.exists())
+            outputFile.createNewFile()
+
+        dump(autoFix, ctx.filesDir.absolutePath, outputFile, outLog)
+
+        outLog.appendLine("Output: $outputDir")
+    }.onSuccess {
+        outLog.appendLine("Dump Success")
         outLog.appendLine("==========================")
-        return -1
+        outLog.finish(0)
+    }.onFailure {
+        outLog.appendError(it.message ?: "Unknown Error")
+        outLog.appendLine("==========================")
+        outLog.finish(-1)
     }
 
 
@@ -165,28 +129,30 @@ class Dumper(private val pkg: String) {
         var mapStart: MapParser? = null
         var mapEnd: MapParser? = null
 
-        files.forEachLine {
-            val map = MapParser(it)
-            if (mapStart == null) {
-                if (file.contains(".so")) {
-                    if (map.getPath().contains(file) && isELF(mem.pid, map.getStartAddress())) {
-                        mapStart = map
-                    }
-                } else {
+        files.useLines { sequence ->
+            sequence
+                .map { line -> MapParser(line) }
+                .forEach { map ->
                     if (map.getPath().contains(file)) {
-                        mapStart = map
+                        if (file.contains(".so")) {
+                            if (isELF(mem.pid, map.getStartAddress()))
+                                mapStart = map
+                        } else {
+                            mapStart = map
+                        }
+                    }
+
+                    mapStart?.let {
+                        if (it.getInode() == map.getInode()) {
+                            mapEnd = map
+                        }
                     }
                 }
-            } else {
-                if (mapStart!!.getInode() == map.getInode()) {
-                    mapEnd = map
-                }
-            }
         }
 
         if (mapStart == null || mapEnd == null)
             throw Exception("Start or End Address not found!")
 
-        return Pair(mapStart!!.getStartAddress(), mapEnd!!.getEndAddress())
+        return mapStart!!.getStartAddress() to mapEnd!!.getEndAddress()
     }
 }
