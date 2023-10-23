@@ -1,14 +1,18 @@
 package com.dumper.android.dumper
 
 import android.content.Context
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import java.io.File
-
 
 enum class Arch(val value: String) {
     UNKNOWN("Unknown"),
     ARCH_32BIT("armeabi-v7a"),
     ARCH_64BIT("arm64-v8a")
 }
+
 object Fixer {
 
 
@@ -47,11 +51,10 @@ object Fixer {
         filesDir: String,
         arch: Arch,
         dumpFile: File,
-        startAddress: String
-    ): Pair<List<String>, List<String>> {
-        val outList = mutableListOf<String>()
-        val errList = mutableListOf<String>()
-        
+        startAddress: String,
+        onSuccess: (input: String) -> Unit,
+        onError: (err: String) -> Unit
+    ) {
         val proc = ProcessBuilder(
             listOf(
                 "$filesDir/${arch.value}/fixer",
@@ -63,14 +66,23 @@ object Fixer {
             .redirectErrorStream(true)
             .start()
 
-        proc.waitFor()
-        proc.inputStream.bufferedReader().useLines { buff ->
-            outList.addAll(buff)
+        runBlocking {
+            listOf(
+                async(Dispatchers.IO) {
+                    val input = proc.inputStream.reader()
+                    var char: Int
+                    while (input.read().also { char = it } >= 0) {
+                        onSuccess(char.toChar().toString())
+                    }
+                },
+                async(Dispatchers.IO) {
+                    val input = proc.errorStream.reader()
+                    var char: Int;
+                    while (input.read().also { char = it } >= 0) {
+                        onError(char.toChar().toString())
+                    }
+                }
+            ).awaitAll()
         }
-        proc.errorStream.bufferedReader().useLines { buff ->
-            errList.addAll(buff)
-        }
-
-        return Pair(outList, errList)
     }
 }
