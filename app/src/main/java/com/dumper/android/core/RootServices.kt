@@ -23,16 +23,18 @@ class RootServices : RootService(), Handler.Callback {
         return m.binder
     }
 
-
     override fun handleMessage(msg: Message): Boolean {
         val reply = Message.obtain()
         val data = Bundle()
 
         when (msg.what) {
             MSG_GET_PROCESS_LIST -> {
-                val process = Process.getAllProcess(this, true)
-                reply.what = MSG_GET_PROCESS_LIST
-                data.putParcelableArrayList(LIST_ALL_PROCESS, process)
+                runCatching {
+                    Process.getAllProcess(this, true)
+                }.onSuccess { process ->
+                    reply.what = MSG_GET_PROCESS_LIST
+                    data.putParcelableArray(LIST_ALL_PROCESS, process)
+                }
 
                 reply.data = data
                 try {
