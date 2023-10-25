@@ -34,6 +34,9 @@ class RootServices : RootService(), Handler.Callback {
                 }.onSuccess { process ->
                     reply.what = MSG_GET_PROCESS_LIST
                     data.putParcelableArray(LIST_ALL_PROCESS, process.toTypedArray())
+                }.onFailure {
+                    val outLog = OutputHandler(msg, reply)
+                    outLog.appendError(it.stackTraceToString())
                 }
 
                 reply.data = data
@@ -45,23 +48,22 @@ class RootServices : RootService(), Handler.Callback {
             }
 
             MSG_DUMP_PROCESS -> {
-                val outCode = OutputHandler(msg, reply, MSG_DUMP_FINISH)
-                val outLog = OutputHandler(msg, reply, MSG_DUMP_PROCESS)
+                val outLog = OutputHandler(msg, reply)
                 val process = msg.data.getString(PROCESS_NAME)
                 val listFile = msg.data.getStringArray(LIST_FILE)
-                val fixerPath = msg.data.getString(LIBRARY_DIR_NAME, "")
                 val isAutoFix = msg.data.getBoolean(IS_FIX_NAME, false)
-                if (process != null && listFile != null) {
+                if (process != null && !listFile.isNullOrEmpty()) {
                     val dumper = Dumper(process)
-                    for (file in listFile) {
-                        dumper.file = file
-                        outCode.finish(dumper.dumpFile(null, isAutoFix, fixerPath, outLog))
+                    listFile.forEach {
+                        dumper.file = it
+                        dumper.dumpFile(this, isAutoFix, outLog)
                     }
                 } else {
                     outLog.appendError("Data Error!")
-                    outCode.finish(-1)
+                    outLog.finish(-1)
                 }
             }
+
             else -> {
                 data.putString(DUMP_LOG, "[ERROR] Unknown command")
                 reply.data = data
@@ -86,7 +88,6 @@ class RootServices : RootService(), Handler.Callback {
         const val MSG_DUMP_FINISH = 3
         const val DUMP_CODE = "DUMP_CODE"
         const val DUMP_LOG = "DUMP_LOG"
-        const val LIBRARY_DIR_NAME = "NATIVE_DIR"
         const val LIST_ALL_PROCESS = "LIST_ALL_PROCESS"
         const val PROCESS_NAME = "PROCESS"
         const val LIST_FILE = "LIST_FILE"

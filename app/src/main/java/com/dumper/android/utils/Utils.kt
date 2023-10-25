@@ -25,6 +25,3 @@ fun PackageManager.getApplicationInfoCompact(processName: String, flags: Int): A
 
 fun ApplicationInfo.isInvalid() =
     (flags and ApplicationInfo.FLAG_STOPPED != 0) || (flags and ApplicationInfo.FLAG_SYSTEM != 0)
-
-
-fun String.removeNullChar(): String = replace("\u0000", "")

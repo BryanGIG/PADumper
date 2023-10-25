@@ -28,7 +28,6 @@ import com.anggrayudi.storage.permission.PermissionReport
 import com.anggrayudi.storage.permission.PermissionResult
 import com.dumper.android.R
 import com.dumper.android.core.RootServices.Companion.IS_FIX_NAME
-import com.dumper.android.core.RootServices.Companion.LIBRARY_DIR_NAME
 import com.dumper.android.core.RootServices.Companion.LIST_FILE
 import com.dumper.android.core.RootServices.Companion.MSG_DUMP_PROCESS
 import com.dumper.android.core.RootServices.Companion.MSG_GET_PROCESS_LIST
@@ -110,8 +109,6 @@ class MainActivity : AppCompatActivity() {
         dumpFile: Array<String>,
         autoFix: Boolean
     ) {
-        val soFixerPath = filesDir.path
-
         if (intent.getBooleanExtra("IS_ROOT", false)) {
             val message = Message.obtain(null, MSG_DUMP_PROCESS)
 
@@ -120,10 +117,8 @@ class MainActivity : AppCompatActivity() {
                 putStringArray(LIST_FILE, dumpFile)
                 if (autoFix) {
                     putBoolean(IS_FIX_NAME, true)
-                    putString(LIBRARY_DIR_NAME, soFixerPath)
                 }
             }
-
 
             message.replyTo = receiver
             remoteMessenger?.send(message)
@@ -133,7 +128,7 @@ class MainActivity : AppCompatActivity() {
 
             dumpFile.forEach {
                 dumper.file = it
-                outHandler.finish(dumper.dumpFile(this, autoFix, null, outHandler))
+                dumper.dumpFile(this, autoFix, outHandler)
             }
         }
     }
@@ -143,9 +138,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupStoragePermission() {
-        if (Build.VERSION.SDK_INT in 23..28) {
+        if (Build.VERSION.SDK_INT in Build.VERSION_CODES.M ..Build.VERSION_CODES.P) {
             permissionRequest.check()
-        } else if (Build.VERSION.SDK_INT == 29) {
+        } else if (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q) {
             storageHelper.requestStorageAccess()
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             if (!storageHelper.storage.isStorageAccessGranted(StorageId.PRIMARY)) {

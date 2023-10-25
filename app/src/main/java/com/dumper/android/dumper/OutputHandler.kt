@@ -12,7 +12,6 @@ class OutputHandler {
     private var isRoot = false
     private lateinit var from: Message
     private lateinit var reply: Message
-    private var what = 0
     private lateinit var console: ConsoleViewModel
 
     private constructor()
@@ -22,13 +21,11 @@ class OutputHandler {
      * Use this method if you're on root services
      * @param from: Message from client
      * @param reply: Message to client
-     * @param what: What to reply
     */
-    constructor(from: Message, reply: Message, what: Int) : this() {
+    constructor(from: Message, reply: Message) : this() {
         isRoot = true
         this.from = from
         this.reply = reply
-        this.what = what
     }
 
     /*
@@ -45,7 +42,7 @@ class OutputHandler {
         if (isRoot) {
             val data = Bundle()
             data.putString(RootServices.DUMP_LOG, str)
-            reply.what = what
+            reply.what = RootServices.MSG_DUMP_PROCESS
             reply.data = data
             try {
                 from.replyTo.send(reply)
@@ -61,7 +58,7 @@ class OutputHandler {
         if (isRoot) {
             val data = Bundle()
             data.putInt(RootServices.DUMP_CODE, code)
-            reply.what = what
+            reply.what = RootServices.MSG_DUMP_FINISH
             reply.data = data
             try {
                 from.replyTo.send(reply)
@@ -73,13 +70,12 @@ class OutputHandler {
         }
     }
 
+    fun append(text: String) {
+        processInput(text)
+    }
 
     fun appendLine(text: String) {
         processInput(text + "\n")
-    }
-
-    fun appendLine() {
-        processInput("\n")
     }
 
     fun appendError(text: String) {
