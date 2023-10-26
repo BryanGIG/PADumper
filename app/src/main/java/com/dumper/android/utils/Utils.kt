@@ -14,16 +14,8 @@ fun Long.toHex(): String {
 }
 
 @Suppress("DEPRECATION")
-inline fun <reified T : Parcelable> Bundle.getParcelableArrayListCompact(key: String): ArrayList<T>? {
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        getParcelableArrayList(key, T::class.java)
-    } else {
-        getParcelableArrayList(key)
-    }
-}
-
-@Suppress("DEPRECATION")
-fun PackageManager.getApplicationInfoCompact(packageName: String, flags: Int): ApplicationInfo {
+fun PackageManager.getApplicationInfoCompact(processName: String, flags: Int): ApplicationInfo {
+    val packageName = processName.substringBefore(":")
     return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         getApplicationInfo(packageName, PackageManager.ApplicationInfoFlags.of(flags.toLong()))
     } else {

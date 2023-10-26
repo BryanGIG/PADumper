@@ -12,54 +12,49 @@ import java.io.File
 
 object Process {
 
-    fun getAllProcess(ctx: Context, isRoot: Boolean): ArrayList<ProcessData> {
-        val finalAppsBundle = ArrayList<ProcessData>()
-        if (isRoot) {
-            val activityManager = ctx.getSystemService(ACTIVITY_SERVICE) as ActivityManager
+    fun getAllProcess(ctx: Context, isRoot: Boolean) =
+        if (isRoot)
+            getAllProcessRoot(ctx)
+        else
+            getAllProcessNoRoot()
 
-            activityManager.runningAppProcesses.forEach {
-                try {
-                    val apps = ctx.packageManager.getApplicationInfoCompact(
-                        it.processName.substringBefore(":"), 0
-                    )
-                    if (!apps.isInvalid() && apps.packageName != BuildConfig.APPLICATION_ID) {
-                        val data = ProcessData(
-                            it.processName,
-                            ctx.packageManager.getApplicationLabel(apps).toString()
-                        )
-                        finalAppsBundle.add(data)
+
+    private fun getAllProcessRoot(ctx: Context): List<ProcessData> {
+        val activityManager = ctx.getSystemService(ACTIVITY_SERVICE) as ActivityManager
+        return activityManager.runningAppProcesses
+            .mapNotNull {
+                runCatching {
+                    val pkgManager = ctx.packageManager
+                    val app = pkgManager.getApplicationInfoCompact(it.processName, 0)
+                    if (!app.isInvalid() && app.packageName != BuildConfig.APPLICATION_ID) {
+                        val appLabel = pkgManager.getApplicationLabel(app).toString()
+                        ProcessData(it.processName, appLabel)
+                    } else {
+                        null
                     }
-                } catch (_: Exception) {
-                }
+                }.getOrNull()
             }
-        } else {
-            val proc = File("/proc")
-            if (!proc.exists())
-                return finalAppsBundle
+    }
 
-            val dPID = proc.listFiles()
-            if (dPID.isNullOrEmpty())
-                return finalAppsBundle
-
-            for (line in dPID) {
-                if (!line.name.isDigitsOnly())
-                    continue;
-
-                val comm = File("${line.path}/comm")
-                val cmdline = File("${line.path}/cmdline")
+    private fun getAllProcessNoRoot(): List<ProcessData> {
+        return File("/proc")
+            .listFiles().orEmpty()
+            .filter { it.name.isDigitsOnly() }
+            .mapNotNull {
+                val comm = File("${it.path}/comm")
+                val cmdline = File("${it.path}/cmdline")
                 if (!comm.exists() || !cmdline.exists())
-                    continue;
+                    return@mapNotNull null
 
                 val processName = comm.readText(Charsets.UTF_8).removeNullChar()
                 val processPkg = cmdline.readText(Charsets.UTF_8).removeNullChar()
 
                 if (processPkg != "sh" && !processPkg.contains(BuildConfig.APPLICATION_ID)) {
-                    val data = ProcessData(processPkg, processName)
-                    finalAppsBundle.add(data)
+                    ProcessData(processPkg, processName)
+                } else {
+                    null
                 }
             }
-        }
-        return finalAppsBundle
     }
 
     /**
@@ -67,28 +62,16 @@ object Process {
      * @return pid of process or null if process id is not found
      */
     fun getProcessID(pkg: String): Int? {
-        val proc = File("/proc")
-        if (!proc.exists())
-            return null
-
-        val dPID = proc.listFiles()
-        if (dPID.isNullOrEmpty())
-            return null
-
-        dPID.find {
-            if (it.name.isDigitsOnly()) {
+        return File("/proc")
+            .listFiles().orEmpty()
+            .filter { it.name.isDigitsOnly() }
+            .find {
                 val cmdline = File("${it.path}/cmdline")
-                if (cmdline.exists()) {
-                    val textCmd = cmdline.readText(Charsets.UTF_8)
-                    if (textCmd.contains(pkg)) {
-                        return@find true
-                    }
-                }
-            }
-            return@find false
-        }?.let {
-            return it.name.toInt()
-        }
-        return null
+                if (!cmdline.exists())
+                    return@find false
+
+                val textCmd = cmdline.readText(Charsets.UTF_8)
+                return@find textCmd.contains(pkg)
+            }?.name?.toIntOrNull()
     }
 }

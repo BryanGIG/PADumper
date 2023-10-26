@@ -2,10 +2,10 @@ package com.dumper.android.messager
 
 import android.os.Handler
 import android.os.Message
+import androidx.core.os.BundleCompat
 import com.dumper.android.core.MainActivity
 import com.dumper.android.core.RootServices
 import com.dumper.android.dumper.process.ProcessData
-import com.dumper.android.utils.getParcelableArrayListCompact
 
 class MSGReceiver(private val activity: MainActivity) : Handler.Callback {
 
@@ -14,7 +14,8 @@ class MSGReceiver(private val activity: MainActivity) : Handler.Callback {
 
         when (message.what) {
             RootServices.MSG_GET_PROCESS_LIST -> {
-                message.data.getParcelableArrayListCompact<ProcessData>(RootServices.LIST_ALL_PROCESS)
+                BundleCompat.getParcelableArray(message.data, RootServices.LIST_ALL_PROCESS, ProcessData::class.java)
+                    ?.filterIsInstance<ProcessData>()
                     ?.let {
                         activity.memory.showProcess(activity, it)
                     }
