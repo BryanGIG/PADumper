@@ -1,5 +1,7 @@
 package com.dumper.android.dumper
 
+import android.util.Log
+
 class MapParser(str: String) {
     
     private var address = ""
@@ -11,6 +13,7 @@ class MapParser(str: String) {
 
     init {
         val strp = str.replace("\\s+".toRegex(), " ").split(" ")
+        Log.e("MapParser", strp.joinToString(","))
         strp.forEachIndexed { index, s ->
             when (index) {
                 0 -> address = s

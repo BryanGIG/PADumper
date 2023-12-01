@@ -1,5 +1,6 @@
 package com.dumper.android.dumper
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Environment
 import com.dumper.android.dumper.process.Process
@@ -14,7 +15,6 @@ class Dumper(private val pkg: String) {
     var file: String = ""
 
     private fun dump(autoFix: Boolean, fixerPath: String, outputFile: File, outLog: OutputHandler) {
-
         RandomAccessFile("/proc/${mem.pid}/mem", "r")
             .channel
             .use {
@@ -39,13 +39,13 @@ class Dumper(private val pkg: String) {
 
         outLog.appendLine("Fixing...")
         outLog.appendLine("Fixer output :")
-        Fixer.fixDump(fixerPath, archELF, outputFile, mem.sAddress.toHex(),
-            onSuccess = { input ->
-                outLog.append(input)
-            },
-            onError = { error ->
-                outLog.append(error)
-            }
+        Fixer.fixDump(
+            fixerPath,
+            archELF,
+            outputFile,
+            mem.sAddress.toHex(),
+            onSuccess = { outLog.append(it) },
+            onError = { outLog.append(it) }
         )
     }
 
@@ -57,6 +57,7 @@ class Dumper(private val pkg: String) {
      * @param outLog output handler
      * @return 0 if success, -1 if failed
      */
+    @SuppressLint("SdCardPath")
     fun dumpFile(ctx: Context, autoFix: Boolean, outLog: OutputHandler) = runCatching {
         mem.pid = Process.getProcessID(pkg) ?: throw Exception("Process not found!")
 
@@ -96,7 +97,7 @@ class Dumper(private val pkg: String) {
 
         val outputFile = File(
             outputDir,
-            "${mem.sAddress.toHex()}-${mem.eAddress.toHex()}-${mem.path.getFileName()}"
+            "${mem.sAddress.toHex()}-${mem.eAddress.toHex()}-${mem.path.FileName}"
         )
         if (!outputDir.exists())
             outputFile.createNewFile()
@@ -126,29 +127,32 @@ class Dumper(private val pkg: String) {
         if (!files.exists()) {
             throw FileNotFoundException("Failed To Open : ${files.path}")
         }
+
         var mapStart: MapParser? = null
         var mapEnd: MapParser? = null
 
-        files.useLines { sequence ->
-            sequence
-                .map { line -> MapParser(line) }
-                .forEach { map ->
+        files.readLines()
+            .map { MapParser(it) }
+            .forEach { map ->
+                if (mapStart == null) {
                     if (map.getPath().contains(file)) {
                         if (file.contains(".so")) {
-                            if (isELF(mem.pid, map.getStartAddress()))
+                            if (isELF(mem.pid, map.getStartAddress())) {
                                 mapStart = map
+                                mem.path = map.getPath()
+                            }
                         } else {
                             mapStart = map
+                            mem.path = map.getPath()
                         }
                     }
-
-                    mapStart?.let {
-                        if (it.getInode() == map.getInode()) {
-                            mapEnd = map
-                        }
+                } else {
+                    if (mapStart!!.getInode() == map.getInode()) {
+                        mapEnd = map
                     }
                 }
-        }
+            }
+
 
         if (mapStart == null || mapEnd == null)
             throw Exception("Start or End Address not found!")

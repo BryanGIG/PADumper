@@ -93,7 +93,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun sendRequestAllProcess() {
-
         if (intent.getBooleanExtra("IS_ROOT", false)) {
             val message = Message.obtain(null, MSG_GET_PROCESS_LIST)
             message.replyTo = receiver
