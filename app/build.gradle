@@ -13,13 +13,13 @@ static def generateVersionCode() {
 }
 
 android {
-    compileSdk 33
+    compileSdk 34
     namespace "com.dumper.android"
 
     defaultConfig {
         applicationId  "com.dumper.android"
         minSdk 21
-        targetSdk 33
+        targetSdk 34
         versionCode generateVersionCode()
         versionName "0.0.6"
     }
