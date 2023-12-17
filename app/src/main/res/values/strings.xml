@@ -3,13 +3,14 @@
     <string name="process_name">Process Name</string>
     <string name="select_process">Select Apps</string>
     <string name="elf_name">ELF Name</string>
-    <string name="dump_global_metadata_dat">global-metadata.dat</string>
+    <string name="dump_global_metadata_dat">Dump global-metadata.dat</string>
     <string name="fix_elf_result">Fix ELF</string>
     <string name="dump">Dump</string>
     <string name="github_repository">Github</string>
     <string name="libil2cpp">libil2cpp.so</string>
-    <string name="memory">Memory</string>
-    <string name="console">Console</string>
+    <string name="home">Home</string>
+    <string name="log">Log</string>
     <string name="check_flag_address">Check flag address</string>
     <string name="arch_abi_32_bit_or_64_bit">ELF Arch (32 Bit or 64 Bit)</string>
+    <string name="copy_console">Copy Console</string>
 </resources>

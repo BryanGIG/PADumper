@@ -4,4 +4,12 @@ import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
-data class ProcessData(val processName: String, val appName: String): Parcelable
+data class ProcessData(val processName: String, val appName: String): Parcelable {
+    fun getDisplayName(): String {
+        return if (processName.contains(":"))
+            "$appName (${processName.substringAfter(":")})"
+        else
+            appName
+    }
+
+}

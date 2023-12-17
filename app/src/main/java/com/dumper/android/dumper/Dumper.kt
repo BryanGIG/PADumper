@@ -133,22 +133,20 @@ class Dumper(private val pkg: String) {
 
         files.readLines()
             .map { MapParser(it) }
-            .forEach { map ->
+            .forEach {
                 if (mapStart == null) {
-                    if (map.getPath().contains(file)) {
-                        if (file.contains(".so")) {
-                            if (isELF(mem.pid, map.getStartAddress())) {
-                                mapStart = map
-                                mem.path = map.getPath()
-                            }
+                    if (it.getPath().contains(file)) {
+                        if (file.contains(".so") && isELF(mem.pid, it.getStartAddress())) {
+                            mapStart = it
+                            mem.path = it.getPath()
                         } else {
-                            mapStart = map
-                            mem.path = map.getPath()
+                            mapStart = it
+                            mem.path = it.getPath()
                         }
                     }
                 } else {
-                    if (mapStart!!.getInode() == map.getInode()) {
-                        mapEnd = map
+                    if (mapStart!!.getInode() == it.getInode()) {
+                        mapEnd = it
                     }
                 }
             }
