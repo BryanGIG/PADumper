@@ -13,4 +13,6 @@
     <string name="check_flag_address">Check flag address</string>
     <string name="arch_abi_32_bit_or_64_bit">ELF Arch (32 Bit or 64 Bit)</string>
     <string name="copy_console">Copy Console</string>
+    <string name="select">Select</string>
+    <string name="cancel">Cancel</string>
 </resources>

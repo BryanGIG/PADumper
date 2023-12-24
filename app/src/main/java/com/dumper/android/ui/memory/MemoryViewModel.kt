@@ -14,6 +14,7 @@ class MemoryViewModel : ViewModel() {
     val libName = MutableStateFlow("libil2cpp.so")
     val isFixELF = MutableStateFlow(false)
     val isDumpMetadata = MutableStateFlow(false)
+    val isDialogProcessList = MutableStateFlow(false)
     val processList = MutableLiveData<Array<ProcessData>>()
 
     fun showProcess(ctx: MainActivity, list: List<ProcessData>) {
@@ -22,7 +23,8 @@ class MemoryViewModel : ViewModel() {
             return
         }
 
-        processList.value = list.sortedBy { it.processName }.toTypedArray()
+        processList.value = list.sortedBy { it.getDisplayName() }.toTypedArray()
+        isDialogProcessList.value = true
     }
 
     fun beginDump(context: Context) {
@@ -36,6 +38,10 @@ class MemoryViewModel : ViewModel() {
             dumpFile = dumpFile.toTypedArray(),
             autoFix = isFixELF.value
         )
+    }
+
+    fun closeProcessListDialog() {
+        isDialogProcessList.value = false
     }
 
     fun getProcessList(context: Context) {
@@ -56,10 +62,5 @@ class MemoryViewModel : ViewModel() {
 
     fun changeDumpMetadata(isDumpMetadata: Boolean) {
         this.isDumpMetadata.value = isDumpMetadata
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-
     }
 }

@@ -1,21 +1,27 @@
 package com.dumper.android.ui.memory
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -26,26 +32,46 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.dumper.android.R
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.dumper.android.dumper.process.ProcessData
 
 @Composable
-fun MemoryScreen(navController: NavController, viewModel: MemoryViewModel = viewModel()) {
+fun MemoryScreen(navController: NavController, viewModel: MemoryViewModel) {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
-    val processList by viewModel.processList.observeAsState()
+    val isDialogProcessList by viewModel.isDialogProcessList.collectAsState()
+    val processList by viewModel.processList.observeAsState(emptyArray())
 
-    LaunchedEffect(processList) {
-        if (processList?.isNotEmpty() == true) {
-            val displayNames = processList!!.map { it.getDisplayName() }.toTypedArray()
+    if (isDialogProcessList && processList.isNotEmpty()) {
+        var selectedProcessIndex by remember { mutableIntStateOf(0) }
 
-            MaterialAlertDialogBuilder(context)
-                .setTitle(context.getString(R.string.select_process))
-                .setSingleChoiceItems(displayNames, -1) { dialog, idx ->
-                    viewModel.changePackageName(processList!![idx].processName)
-                    dialog.dismiss()
+        AlertDialog(
+            onDismissRequest = { viewModel.closeProcessListDialog() },
+            title = { Text(stringResource(R.string.select_process)) },
+            text = {
+                LazyColumn(modifier = Modifier.fillMaxWidth()) {
+                    itemsIndexed(items = processList) { idx, process ->
+                        ItemApp(selectedProcessIndex, idx, process) {
+                            selectedProcessIndex = idx
+                        }
+                    }
                 }
-                .create()
-        }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.changePackageName(processList!![selectedProcessIndex].processName)
+                        viewModel.closeProcessListDialog()
+                    }
+                ) {
+                    Text(stringResource(R.string.select))
+                }
+            },
+            dismissButton = {
+                Button(onClick = { viewModel.closeProcessListDialog() }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
     }
 
     Column(
@@ -122,8 +148,28 @@ fun MemoryScreen(navController: NavController, viewModel: MemoryViewModel = view
     }
 }
 
+@Composable
+private fun ItemApp(
+    selectedProcessIndex: Int,
+    idx: Int,
+    process: ProcessData,
+    onClick: () -> Unit = {}
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().clickable { onClick() },
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Checkbox(
+            checked = idx == selectedProcessIndex,
+            onCheckedChange = {}
+        )
+
+        Text(text = process.getDisplayName())
+    }
+}
+
 @Preview
 @Composable
 private fun MemoryScreenPreview() {
-    MemoryScreen(navController = NavController(LocalContext.current))
+    MemoryScreen(NavController(LocalContext.current), viewModel())
 }
