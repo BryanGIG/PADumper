@@ -2,15 +2,11 @@ plugins {
     id 'com.android.application'
     id 'kotlin-android'
     id 'kotlin-parcelize'
+    id 'org.lsposed.lsplugin.jgit'
 }
 
-//https://gist.github.com/paramsen/4a92c9230d799caeb3b90897da27a80c
-static def generateVersionCode() {
-    def result = "git rev-list HEAD --count".execute().text.trim() //unix
-    if(result.empty) result = "PowerShell -Command git rev-list HEAD --count".execute().text.trim() //windows
-    if(result.empty) throw new RuntimeException("Could not generate versioncode on this platform? Cmd output: ${result.text}")
-    return result.toInteger()
-}
+var repo = jgit.repo(true)
+var commitCount = (repo?.commitCount("refs/remotes/origin/master") ?: 1)
 
 android {
     compileSdk 34
@@ -20,7 +16,7 @@ android {
         applicationId  "com.dumper.android"
         minSdk 21
         targetSdk 34
-        versionCode generateVersionCode()
+        versionCode commitCount
         versionName "0.0.7"
     }
 
