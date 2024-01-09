@@ -12,13 +12,14 @@ import com.topjohnwu.superuser.Shell
 class SplashActivity : Activity() {
     companion object {
         init {
-            // Set settings before the main shell can be created
-            Shell.enableVerboseLogging = BuildConfig.DEBUG;
-            Shell.setDefaultBuilder(
-                Shell.Builder.create()
-                    .setFlags(Shell.FLAG_REDIRECT_STDERR)
-                    .setTimeout(10)
-            );
+            if (Shell.getCachedShell() != null) {
+                Shell.enableVerboseLogging = BuildConfig.DEBUG;
+                Shell.setDefaultBuilder(
+                    Shell.Builder.create()
+                        .setFlags(Shell.FLAG_REDIRECT_STDERR)
+                        .setTimeout(10)
+                )
+            }
         }
     }
 
