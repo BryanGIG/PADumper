@@ -33,7 +33,10 @@ import com.dumper.android.ui.MainScreen
 import com.dumper.android.ui.console.ConsoleViewModel
 import com.dumper.android.ui.memory.MemoryViewModel
 import com.dumper.android.ui.theme.PADumperTheme
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.topjohnwu.superuser.Shell
 import com.topjohnwu.superuser.ipc.RootService
+import kotlin.system.exitProcess
 
 class MainActivity : ComponentActivity() {
     var remoteMessenger: Messenger? = null
@@ -42,6 +45,9 @@ class MainActivity : ComponentActivity() {
 
     val memory: MemoryViewModel by viewModels()
     val console: ConsoleViewModel by viewModels()
+
+    // FIXME: Use proper way to check storage permission
+    private var isStoragePermissionGranted = true
 
     private val permissionRequest = ActivityPermissionRequest.Builder(this)
         .withPermissions(
@@ -55,7 +61,19 @@ class MainActivity : ComponentActivity() {
             }
 
             override fun onShouldRedirectToSystemSettings(blockedPermissions: List<PermissionReport>) {
+                super.onShouldRedirectToSystemSettings(blockedPermissions)
                 SimpleStorageHelper.redirectToSystemSettings(this@MainActivity)
+                isStoragePermissionGranted = false
+            }
+
+            override fun onDisplayConsentDialog(request: PermissionRequest) {
+                super.onDisplayConsentDialog(request)
+                isStoragePermissionGranted = false
+            }
+
+            override fun onPermissionRequestInterrupted(permissions: Array<String>) {
+                super.onPermissionRequestInterrupted(permissions)
+                isStoragePermissionGranted = false
             }
         })
         .build()
@@ -74,12 +92,28 @@ class MainActivity : ComponentActivity() {
 
         Fixer.extractLibs(this)
 
-        if (intent.getBooleanExtra("IS_ROOT", false)) {
+        if (Shell.getCachedShell()?.isRoot == true) {
             setupRootService()
         } else {
-            setupSimpleStorage(savedInstanceState)
-            setupStoragePermission()
+            setupNonRoot(savedInstanceState)
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (Shell.getCachedShell()?.isRoot == true && !isStoragePermissionGranted) {
+            setupNonRoot(null)
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        storageHelper.onSaveInstanceState(outState)
+        super.onSaveInstanceState(outState)
+    }
+
+    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+        super.onRestoreInstanceState(savedInstanceState)
+        storageHelper.onRestoreInstanceState(savedInstanceState)
     }
 
     private fun checkShell() {
@@ -143,8 +177,19 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun setupSimpleStorage(savedInstanceState: Bundle?) {
-        savedInstanceState?.let { storageHelper.onRestoreInstanceState(it) }
+    private fun setupNonRoot(savedInstanceState: Bundle?) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Warning")
+            .setMessage("This app required storage permission to work properly")
+            .setPositiveButton("OK") { _, _ ->
+                savedInstanceState?.let { storageHelper.onRestoreInstanceState(it) }
+                setupStoragePermission()
+            }
+            .setNegativeButton("Cancel") { _, _ ->
+                exitProcess(0)
+            }
+            .setCancelable(false)
+            .show()
     }
 
     private fun setupStoragePermission() {
