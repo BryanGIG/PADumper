@@ -64,6 +64,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        checkShell()
+
         setContent {
             PADumperTheme {
                 MainScreen(memory, console)
@@ -77,6 +79,15 @@ class MainActivity : ComponentActivity() {
         } else {
             setupSimpleStorage(savedInstanceState)
             setupStoragePermission()
+        }
+    }
+
+    private fun checkShell() {
+        if (Shell.getCachedShell() == null) {
+            Intent(this, SplashActivity::class.java).also {
+                startActivity(it)
+                finish()
+            }
         }
     }
 
