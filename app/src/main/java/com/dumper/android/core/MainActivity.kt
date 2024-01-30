@@ -17,6 +17,7 @@ import com.anggrayudi.storage.file.StorageId
 import com.anggrayudi.storage.permission.ActivityPermissionRequest
 import com.anggrayudi.storage.permission.PermissionCallback
 import com.anggrayudi.storage.permission.PermissionReport
+import com.anggrayudi.storage.permission.PermissionRequest
 import com.anggrayudi.storage.permission.PermissionResult
 import com.dumper.android.core.RootServices.Companion.IS_FIX_NAME
 import com.dumper.android.core.RootServices.Companion.LIST_FILE
