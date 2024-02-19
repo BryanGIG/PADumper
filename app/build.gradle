@@ -88,7 +88,7 @@ dependencies {
     implementation 'androidx.navigation:navigation-compose:2.7.6'
 
     //Root
-    def libsuVersion = '5.2.0'
+    def libsuVersion = '5.2.2'
     implementation "com.github.topjohnwu.libsu:core:$libsuVersion"
     implementation "com.github.topjohnwu.libsu:service:$libsuVersion"
 
