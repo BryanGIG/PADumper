@@ -19,15 +19,16 @@ import com.anggrayudi.storage.permission.PermissionCallback
 import com.anggrayudi.storage.permission.PermissionReport
 import com.anggrayudi.storage.permission.PermissionRequest
 import com.anggrayudi.storage.permission.PermissionResult
+import com.dumper.android.core.RootServices.Companion.DUMP_FILE
+import com.dumper.android.core.RootServices.Companion.IS_DUMP_METADATA
 import com.dumper.android.core.RootServices.Companion.IS_FIX_NAME
-import com.dumper.android.core.RootServices.Companion.LIST_FILE
 import com.dumper.android.core.RootServices.Companion.MSG_DUMP_PROCESS
 import com.dumper.android.core.RootServices.Companion.MSG_GET_PROCESS_LIST
 import com.dumper.android.core.RootServices.Companion.PROCESS_NAME
 import com.dumper.android.dumper.Dumper
-import com.dumper.android.dumper.Fixer
 import com.dumper.android.dumper.OutputHandler
 import com.dumper.android.dumper.process.Process
+import com.dumper.android.dumper.sofixer.FixerUtils
 import com.dumper.android.messager.MSGConnection
 import com.dumper.android.messager.MSGReceiver
 import com.dumper.android.ui.MainScreen
@@ -91,7 +92,7 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        Fixer.extractLibs(this)
+        FixerUtils.extractLibs(this)
 
         if (Shell.getCachedShell()?.isRoot == true) {
             setupRootService()
@@ -127,7 +128,7 @@ class MainActivity : ComponentActivity() {
     }
 
     fun sendRequestAllProcess() {
-        if (intent.getBooleanExtra("IS_ROOT", false)) {
+        if (remoteMessenger != null && Shell.getCachedShell()?.isRoot == true) {
             val message = Message.obtain(null, MSG_GET_PROCESS_LIST)
             message.replyTo = receiver
             remoteMessenger?.send(message)
@@ -139,7 +140,8 @@ class MainActivity : ComponentActivity() {
 
     fun sendRequestDump(
         process: String,
-        dumpFile: Array<String>,
+        dumpFile: String,
+        isDumpGlobalMetadata: Boolean,
         autoFix: Boolean
     ) {
         if (process.isBlank()) {
@@ -147,19 +149,22 @@ class MainActivity : ComponentActivity() {
             return
         }
 
-        if (dumpFile.any { it.isBlank() }) {
+        if (dumpFile.isBlank()) {
             Toast.makeText(this, "Lib name is empty", Toast.LENGTH_SHORT).show()
             return
         }
 
         console.appendLine("==========================\nProcess : $process")
 
-        if (intent.getBooleanExtra("IS_ROOT", false)) {
+        if (remoteMessenger != null && Shell.getCachedShell()?.isRoot == true) {
             val message = Message.obtain(null, MSG_DUMP_PROCESS)
 
             message.data.apply {
                 putString(PROCESS_NAME, process)
-                putStringArray(LIST_FILE, dumpFile)
+                putString(DUMP_FILE, dumpFile)
+                if (isDumpGlobalMetadata) {
+                    putBoolean(IS_DUMP_METADATA, true)
+                }
                 if (autoFix) {
                     putBoolean(IS_FIX_NAME, true)
                 }
@@ -168,13 +173,10 @@ class MainActivity : ComponentActivity() {
             message.replyTo = receiver
             remoteMessenger?.send(message)
         } else {
-            val dumper = Dumper(process)
             val outHandler = OutputHandler(console)
 
-            dumpFile.forEach {
-                dumper.file = it
-                dumper.dumpFile(this, autoFix, outHandler)
-            }
+            Dumper(process, dumpFile, isDumpGlobalMetadata)
+                .dumpFile(this, autoFix, outHandler)
         }
     }
 

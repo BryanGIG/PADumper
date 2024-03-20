@@ -20,7 +20,7 @@ class ConsoleViewModel : ViewModel() {
     }
 
     fun append(text: String) {
-        console.value = console.value + text
+        console.value += text
     }
 
     fun clear() {

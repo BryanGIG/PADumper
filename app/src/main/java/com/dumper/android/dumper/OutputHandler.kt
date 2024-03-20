@@ -16,7 +16,7 @@ class OutputHandler {
 
     private constructor()
 
-    /*
+    /**
      * This method is used to send message to client
      * Use this method if you're on root services
      * @param from: Message from client
@@ -28,7 +28,7 @@ class OutputHandler {
         this.reply = reply
     }
 
-    /*
+    /**
      * This method is used to append message to console
      * Use this method if you're on non-root
      * @param console: ConsoleViewModel to append

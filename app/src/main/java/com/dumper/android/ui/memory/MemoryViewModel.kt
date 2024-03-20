@@ -28,14 +28,10 @@ class MemoryViewModel : ViewModel() {
     }
 
     fun beginDump(context: Context) {
-        val dumpFile = mutableListOf(libName.value)
-        if (isDumpMetadata.value) {
-            dumpFile.add("global-metadata.dat")
-        }
-
         context.asMainActivity()?.sendRequestDump(
             process = packageName.value,
-            dumpFile = dumpFile.toTypedArray(),
+            dumpFile = libName.value,
+            isDumpGlobalMetadata = isDumpMetadata.value,
             autoFix = isFixELF.value
         )
     }

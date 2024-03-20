@@ -1,6 +1,5 @@
 package com.dumper.android.ui.navigation
 
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -15,7 +14,6 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.dumper.android.ui.Screen
 
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun BottomNavBar(navController: NavController) {
     val items = listOf(

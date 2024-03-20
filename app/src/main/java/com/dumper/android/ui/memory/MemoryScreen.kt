@@ -9,12 +9,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -24,15 +26,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.dumper.android.R
-import com.dumper.android.dumper.process.ProcessData
 
 @Composable
 fun MemoryScreen(navController: NavController, viewModel: MemoryViewModel) {
@@ -106,27 +109,17 @@ fun MemoryScreen(navController: NavController, viewModel: MemoryViewModel) {
             modifier = Modifier.fillMaxWidth()
         )
 
-        Row(
+        LabelledCheckBox(
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Checkbox(
-                checked = autoFix,
-                onCheckedChange = { viewModel.changeFixELF(it) },
-            )
-            Text(stringResource(R.string.fix_elf_result))
-        }
+            checked = autoFix,
+            onCheckedChange = { viewModel.changeFixELF(it) },
+            label = stringResource(R.string.fix_elf_result))
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Checkbox(
-                checked = metadata,
-                onCheckedChange = { viewModel.changeDumpMetadata(it) },
-            )
-            Text(stringResource(R.string.dump_global_metadata_dat))
-        }
+        LabelledCheckBox(
+            checked = metadata,
+            onCheckedChange = { viewModel.changeDumpMetadata(it) },
+            label =stringResource(R.string.dump_global_metadata_dat))
+
 
         Button(
             onClick = {
@@ -149,22 +142,26 @@ fun MemoryScreen(navController: NavController, viewModel: MemoryViewModel) {
 }
 
 @Composable
-private fun ItemApp(
-    selectedProcessIndex: Int,
-    idx: Int,
-    process: ProcessData,
-    onClick: () -> Unit = {}
+fun LabelledCheckBox(
+    modifier: Modifier = Modifier,
+    checked: Boolean,
+    onCheckedChange: ((Boolean) -> Unit),
+    label: String,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().clickable { onClick() },
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = { onCheckedChange(!checked) }),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Checkbox(
-            checked = idx == selectedProcessIndex,
-            onCheckedChange = {}
+            checked = checked,
+            onCheckedChange = { onCheckedChange(!checked) }
         )
 
-        Text(text = process.getDisplayName())
+        Text(
+            text = label,
+        )
     }
 }
 

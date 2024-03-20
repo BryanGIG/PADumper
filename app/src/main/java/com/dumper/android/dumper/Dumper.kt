@@ -3,51 +3,27 @@ package com.dumper.android.dumper
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Environment
+import com.dumper.android.dumper.maps.MapLineParser
+import com.dumper.android.dumper.metadata.MetadataFinder
 import com.dumper.android.dumper.process.Process
-import com.dumper.android.utils.*
+import com.dumper.android.dumper.sofixer.Fixer
+import com.dumper.android.utils.DEFAULT_DIR
+import com.dumper.android.utils.FileName
+import com.dumper.android.utils.copyToFile
+import com.dumper.android.utils.getArchELF
+import com.dumper.android.utils.isELF
+import com.dumper.android.utils.toHex
 import com.topjohnwu.superuser.Shell
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.RandomAccessFile
 
-class Dumper(private val pkg: String) {
-    private val mem = Memory(pkg)
-    var file: String = ""
-
-    private fun dump(autoFix: Boolean, fixerPath: String, outputFile: File, outLog: OutputHandler) {
-        RandomAccessFile("/proc/${mem.pid}/mem", "r")
-            .channel
-            .use {
-                it.copyToFile(mem.sAddress, mem.size, outputFile)
-
-                if (autoFix) {
-                    val archELF = getArchELF(it, mem)
-                    fixDumpFile(fixerPath, archELF, outputFile, outLog)
-                }
-                it.close()
-            }
-    }
-
-    private fun fixDumpFile(
-        fixerPath: String,
-        archELF: Arch,
-        outputFile: File,
-        outLog: OutputHandler
-    ) {
-        if (archELF == Arch.UNKNOWN)
-            return
-
-        outLog.appendLine("Fixing...")
-        outLog.appendLine("Fixer output :")
-        Fixer.fixDump(
-            fixerPath,
-            archELF,
-            outputFile,
-            mem.sAddress.toHex(),
-            onSuccess = { outLog.append(it) },
-            onError = { outLog.append(it) }
-        )
-    }
+class Dumper(
+    private val pkg: String,
+    private var file: String,
+    private val isDumpMetadata: Boolean
+) {
+    private var pid: Int? = null
 
     /**
      * Dump the memory to a file
@@ -59,28 +35,25 @@ class Dumper(private val pkg: String) {
      */
     @SuppressLint("SdCardPath")
     fun dumpFile(ctx: Context, autoFix: Boolean, outLog: OutputHandler) = runCatching {
-        mem.pid = Process.getProcessID(pkg) ?: throw Exception("Process not found!")
+        pid = Process.getProcessID(pkg) ?: throw Exception("Process not found!")
 
-        outLog.appendLine("PID : ${mem.pid}")
+        outLog.appendLine("PID : $pid")
         outLog.appendLine("FILE : $file")
 
-        val map = parseMap()
-        mem.sAddress = map.first
-        mem.eAddress = map.second
-        mem.size = mem.eAddress - mem.sAddress
+        val mem = parseMap() ?: throw Exception("Unable to parse map!")
 
-        outLog.appendLine("Start Address : ${mem.sAddress.toHex()}")
-        if (mem.sAddress < 1L) {
+        outLog.appendLine("Start Address : ${mem.getStartAddress().toHex()}")
+        if (mem.getStartAddress() < 1L) {
             throw Exception("Invalid Start Address!")
         }
 
-        outLog.appendLine("End Address : ${mem.eAddress.toHex()}")
-        if (mem.eAddress < 1L) {
+        outLog.appendLine("End Address : ${mem.getEndAddress().toHex()}")
+        if (mem.getEndAddress() < 1L) {
             throw Exception("Invalid End Address!")
         }
 
-        outLog.appendLine("Size Memory : ${mem.size}")
-        if (mem.size < 1L) {
+        outLog.appendLine("Size Memory : ${mem.getSize()}")
+        if (mem.getSize() < 1L) {
             throw Exception("Invalid memory size!")
         }
 
@@ -95,14 +68,23 @@ class Dumper(private val pkg: String) {
         if (!outputDir.exists())
             outputDir.mkdirs()
 
-        val outputFile = File(
-            outputDir,
-            "${mem.sAddress.toHex()}-${mem.eAddress.toHex()}-${mem.path.FileName}"
-        )
+        val outputFile = File(outputDir, "${mem.getStartAddress().toHex()}-${mem.getEndAddress().toHex()}-${mem.getPath().FileName}")
         if (!outputDir.exists())
             outputFile.createNewFile()
 
-        dump(autoFix, ctx.filesDir.absolutePath, outputFile, outLog)
+        dump(mem, autoFix, ctx.filesDir.absolutePath, outputFile, outLog)
+
+        if (isDumpMetadata) {
+            val metadataFinder = MetadataFinder(pid!!)
+            metadataFinder.findUnityMetadata(outLog).let {
+                if (it == null)
+                    outLog.appendError("Unable to find global-metadata.dat")
+                else {
+                    outLog.appendInfo("Dumping global-metadata.dat...")
+                    dump(it, false, "", File(outputDir, "global-metadata.dat"), outLog)
+                }
+            }
+        }
 
         outLog.appendLine("Output: $outputDir")
     }.onSuccess {
@@ -110,11 +92,31 @@ class Dumper(private val pkg: String) {
         outLog.appendLine("==========================")
         outLog.finish(0)
     }.onFailure {
-        outLog.appendError(it.message ?: "Unknown Error")
+        outLog.appendError(it.stackTraceToString())
         outLog.appendLine("==========================")
         outLog.finish(-1)
     }
 
+
+    private fun dump(
+        mem: MapLineParser,
+        autoFix: Boolean,
+        fixerPath: String,
+        outputFile: File,
+        outLog: OutputHandler
+    ) {
+        RandomAccessFile("/proc/$pid/mem", "r")
+            .channel
+            .use {
+                it.copyToFile(mem.getStartAddress(), mem.getSize(), outputFile)
+
+                if (autoFix) {
+                    val archELF = getArchELF(it, mem)
+                    Fixer(fixerPath).fixELFFile(mem.getStartAddress(), archELF, outputFile, outLog)
+                }
+                it.close()
+            }
+    }
 
     /**
      * Parsing the memory map
@@ -122,39 +124,41 @@ class Dumper(private val pkg: String) {
      * @throws FileNotFoundException failed to open /proc/{pid}/maps
      * @throws RuntimeException start or end address is not found
      */
-    private fun parseMap(): Pair<Long, Long> {
-        val files = File("/proc/${mem.pid}/maps")
+    private fun parseMap(): MapLineParser? {
+        if (pid == null) {
+            throw ExceptionInInitializerError("Init Pid?")
+        }
+
+        val files = File("/proc/$pid/maps")
         if (!files.exists()) {
             throw FileNotFoundException("Failed To Open : ${files.path}")
         }
 
-        var mapStart: MapParser? = null
-        var mapEnd: MapParser? = null
+        var map: MapLineParser? = null
 
         files.readLines()
-            .map { MapParser(it) }
+            .map { MapLineParser(it) }
             .forEach {
-                if (mapStart == null) {
+                if (map == null) {
                     if (it.getPath().contains(file)) {
-                        if (file.contains(".so") && isELF(mem.pid, it.getStartAddress())) {
-                            mapStart = it
-                            mem.path = it.getPath()
-                        } else {
-                            mapStart = it
-                            mem.path = it.getPath()
+                        map = when {
+                            file.contains(".so") && isELF(
+                                pid!!,
+                                it.getStartAddress()
+                            ) -> it // Must be valid .so ELF files
+                            else -> it // For all other files
                         }
                     }
                 } else {
-                    if (mapStart!!.getInode() == it.getInode()) {
-                        mapEnd = it
+                    if (map!!.getInode() == it.getInode()) {
+                        map!!.setEndAddress(it.getEndAddress())
                     }
                 }
             }
 
-
-        if (mapStart == null || mapEnd == null)
+        if (map == null || map?.isValid() == false)
             throw Exception("Start or End Address not found!")
 
-        return mapStart!!.getStartAddress() to mapEnd!!.getEndAddress()
+        return map
     }
 }

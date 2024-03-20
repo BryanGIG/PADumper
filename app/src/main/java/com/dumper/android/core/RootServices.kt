@@ -50,14 +50,12 @@ class RootServices : RootService(), Handler.Callback {
             MSG_DUMP_PROCESS -> {
                 val outLog = OutputHandler(msg, reply)
                 val process = msg.data.getString(PROCESS_NAME)
-                val listFile = msg.data.getStringArray(LIST_FILE)
+                val dumpFile = msg.data.getString(DUMP_FILE)
                 val isAutoFix = msg.data.getBoolean(IS_FIX_NAME, false)
-                if (process != null && !listFile.isNullOrEmpty()) {
-                    val dumper = Dumper(process)
-                    listFile.forEach {
-                        dumper.file = it
-                        dumper.dumpFile(this, isAutoFix, outLog)
-                    }
+                val isDumpMetadata = msg.data.getBoolean(IS_DUMP_METADATA, false)
+                if (process != null && dumpFile != null) {
+                    val dumper = Dumper(process, dumpFile, isDumpMetadata)
+                    dumper.dumpFile(this, isAutoFix, outLog)
                 } else {
                     outLog.appendError("Data Error!")
                     outLog.finish(-1)
@@ -90,7 +88,8 @@ class RootServices : RootService(), Handler.Callback {
         const val DUMP_LOG = "DUMP_LOG"
         const val LIST_ALL_PROCESS = "LIST_ALL_PROCESS"
         const val PROCESS_NAME = "PROCESS"
-        const val LIST_FILE = "LIST_FILE"
+        const val DUMP_FILE = "DUMP_FILE"
         const val IS_FIX_NAME = "FIX_ELF"
+        const val IS_DUMP_METADATA = "IS_DUMP_METADATA"
     }
 }
