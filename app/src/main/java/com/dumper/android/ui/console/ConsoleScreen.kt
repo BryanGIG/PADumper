@@ -46,13 +46,14 @@ fun ConsoleScreen(navController: NavController, viewModel: ConsoleViewModel = vi
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        val scrollState = rememberScrollState()
+        val horizontalState = rememberScrollState()
+        val verticalState = rememberScrollState()
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(scrollState)
-                .horizontalScroll(scrollState)
+                .verticalScroll(verticalState)
+                .horizontalScroll(horizontalState)
                 .padding(10.dp)
         ) {
             Text(
@@ -71,7 +72,10 @@ fun ConsoleScreen(navController: NavController, viewModel: ConsoleViewModel = vi
                 .padding(8.dp),
             elevation = FloatingActionButtonDefaults.elevation(5.dp)
         ) {
-            Icon(Icons.Default.ContentCopy, contentDescription = stringResource(R.string.copy_console))
+            Icon(
+                Icons.Default.ContentCopy,
+                contentDescription = stringResource(R.string.copy_console)
+            )
         }
     }
 }
