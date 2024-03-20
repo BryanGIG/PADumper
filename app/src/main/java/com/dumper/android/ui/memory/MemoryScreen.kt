@@ -49,28 +49,31 @@ fun MemoryScreen(navController: NavController, viewModel: MemoryViewModel) {
 
         AlertDialog(
             onDismissRequest = { viewModel.closeProcessListDialog() },
+            shape = RoundedCornerShape(4),
             title = { Text(stringResource(R.string.select_process)) },
             text = {
                 LazyColumn(modifier = Modifier.fillMaxWidth()) {
                     itemsIndexed(items = processList) { idx, process ->
-                        ItemApp(selectedProcessIndex, idx, process) {
-                            selectedProcessIndex = idx
+                        TextButton(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RectangleShape,
+                            onClick = {
+                                selectedProcessIndex = idx
+                                viewModel.changePackageName(processList!![selectedProcessIndex].processName)
+                                viewModel.closeProcessListDialog()
+                            }) {
+                            Text(
+                                modifier = Modifier.fillMaxWidth(),
+                                text = process.getDisplayName(),
+                                textAlign = TextAlign.Start
+                            )
                         }
                     }
                 }
             },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        viewModel.changePackageName(processList!![selectedProcessIndex].processName)
-                        viewModel.closeProcessListDialog()
-                    }
-                ) {
-                    Text(stringResource(R.string.select))
-                }
-            },
+            confirmButton = {},
             dismissButton = {
-                Button(onClick = { viewModel.closeProcessListDialog() }) {
+                TextButton(onClick = { viewModel.closeProcessListDialog() }) {
                     Text(stringResource(R.string.cancel))
                 }
             }
