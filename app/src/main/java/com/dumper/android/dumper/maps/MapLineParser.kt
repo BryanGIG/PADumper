@@ -62,6 +62,10 @@ class MapLineParser(line: String) {
         return getEndAddress() - getStartAddress()
     }
 
+    fun getSizeInMB() : Long {
+        return getSize() / 1024 / 1024
+    }
+
     fun isValid(): Boolean {
         return getStartAddress() > 0L || getEndAddress() > 0L
     }

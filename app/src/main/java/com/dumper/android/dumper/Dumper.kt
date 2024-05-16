@@ -37,22 +37,22 @@ class Dumper(
     fun dumpFile(ctx: Context, autoFix: Boolean, outLog: OutputHandler) = runCatching {
         pid = Process.getProcessID(pkg) ?: throw Exception("Process not found!")
 
-        outLog.appendLine("PID : $pid")
-        outLog.appendLine("FILE : $file")
+        outLog.appendLine("PID: $pid")
+        outLog.appendLine("FILE: $file")
 
         val mem = parseMap() ?: throw Exception("Unable to parse map!")
 
-        outLog.appendLine("Start Address : ${mem.getStartAddress().toHex()}")
+        outLog.appendLine("Start Address: ${mem.getStartAddress().toHex()}")
         if (mem.getStartAddress() < 1L) {
             throw Exception("Invalid Start Address!")
         }
 
-        outLog.appendLine("End Address : ${mem.getEndAddress().toHex()}")
+        outLog.appendLine("End Address: ${mem.getEndAddress().toHex()}")
         if (mem.getEndAddress() < 1L) {
             throw Exception("Invalid End Address!")
         }
 
-        outLog.appendLine("Size Memory : ${mem.getSize()}")
+        outLog.appendLine("Size Memory: ${mem.getSizeInMB()}MB (${mem.getSize()})")
         if (mem.getSize() < 1L) {
             throw Exception("Invalid memory size!")
         }
