@@ -19,8 +19,8 @@ class Fixer(private val fixerPath: String) {
         if (archELF == Arch.UNKNOWN)
             return
 
-        outLog.appendLine("Fixing...")
-        outLog.appendLine("Fixer output :")
+        outLog.appendInfo("Fixing...")
+        outLog.appendInfo("Fixer output :")
 
         fixDump(
             archELF,
