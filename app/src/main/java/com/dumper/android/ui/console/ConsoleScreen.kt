@@ -1,5 +1,6 @@
 package com.dumper.android.ui.console
 
+import android.widget.Toast
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,9 +40,9 @@ fun ConsoleScreen(navController: NavController, viewModel: ConsoleViewModel = vi
     LaunchedEffect(eventCode) {
         eventCode?.getContentIfNotHandled()?.let {
             if (it == 0) {
-                viewModel.appendSuccess("Dump success!")
+                Toast.makeText(context,"Dump success!", Toast.LENGTH_SHORT).show()
             } else {
-                viewModel.appendError("Dump error!")
+                Toast.makeText(context, "Dump error!", Toast.LENGTH_SHORT).show()
             }
         }
     }
