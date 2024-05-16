@@ -14,20 +14,20 @@ class Fixer(private val fixerPath: String) {
         startAddress: Long,
         archELF: Arch,
         outputFile: File,
-        outLog: OutputHandler?
+        outLog: OutputHandler
     ) {
         if (archELF == Arch.UNKNOWN)
             return
 
-        outLog?.appendLine("Fixing...")
-        outLog?.appendLine("Fixer output :")
+        outLog.appendLine("Fixing...")
+        outLog.appendLine("Fixer output :")
 
         fixDump(
             archELF,
             outputFile,
             startAddress.toHex(),
-            onSuccess = { outLog?.append(it) },
-            onError = { outLog?.append(it) }
+            onSuccess = { outLog.append(it) },
+            onError = { outLog.append(it) }
         )
     }
 

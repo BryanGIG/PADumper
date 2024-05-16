@@ -3,6 +3,8 @@ package com.dumper.android.dumper
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Environment
+import com.dumper.android.dumper.elf.getArchELF
+import com.dumper.android.dumper.elf.isELF
 import com.dumper.android.dumper.maps.MapLineParser
 import com.dumper.android.dumper.metadata.MetadataFinder
 import com.dumper.android.dumper.process.Process
@@ -10,8 +12,6 @@ import com.dumper.android.dumper.sofixer.Fixer
 import com.dumper.android.utils.DEFAULT_DIR
 import com.dumper.android.utils.FileName
 import com.dumper.android.utils.copyToFile
-import com.dumper.android.utils.getArchELF
-import com.dumper.android.utils.isELF
 import com.dumper.android.utils.toHex
 import com.topjohnwu.superuser.Shell
 import java.io.File
@@ -81,14 +81,14 @@ class Dumper(
                     outLog.appendError("Unable to find global-metadata.dat")
                 else {
                     outLog.appendInfo("Dumping global-metadata.dat...")
-                    dump(it, false, "", File(outputDir, "global-metadata.dat"), outLog)
+                    dump(it, outputFile = File(outputDir, "global-metadata.dat"), outLog = outLog)
                 }
             }
         }
 
         outLog.appendLine("Output: $outputDir")
     }.onSuccess {
-        outLog.appendLine("Dump Success")
+        outLog.appendInfo("Dump Success")
         outLog.appendLine("==========================")
         outLog.finish(0)
     }.onFailure {
@@ -100,8 +100,8 @@ class Dumper(
 
     private fun dump(
         mem: MapLineParser,
-        autoFix: Boolean,
-        fixerPath: String,
+        autoFix: Boolean = false,
+        fixerPath: String? = null,
         outputFile: File,
         outLog: OutputHandler
     ) {
@@ -110,7 +110,7 @@ class Dumper(
             .use {
                 it.copyToFile(mem.getStartAddress(), mem.getSize(), outputFile)
 
-                if (autoFix) {
+                if (autoFix && fixerPath != null) {
                     val archELF = getArchELF(it, mem)
                     Fixer(fixerPath).fixELFFile(mem.getStartAddress(), archELF, outputFile, outLog)
                 }
@@ -137,17 +137,15 @@ class Dumper(
         var map: MapLineParser? = null
 
         files.readLines()
+            .filter { it.contains(file) }
             .map { MapLineParser(it) }
             .forEach {
                 if (map == null) {
-                    if (it.getPath().contains(file)) {
-                        map = when {
-                            file.contains(".so") && isELF(
-                                pid!!,
-                                it.getStartAddress()
-                            ) -> it // Must be valid .so ELF files
-                            else -> it // For all other files
-                        }
+                    val path = it.getPath()
+                    if (!path.contains(".so")) {
+                        map = it // For all other files
+                    } else if (isELF(pid!!, it.getStartAddress())) {
+                        map = it // Must be valid .so ELF files
                     }
                 } else {
                     if (map!!.getInode() == it.getInode()) {

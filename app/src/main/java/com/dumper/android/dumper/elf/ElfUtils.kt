@@ -1,4 +1,4 @@
-package com.dumper.android.utils
+package com.dumper.android.dumper.elf
 
 import com.dumper.android.dumper.maps.MapLineParser
 import com.dumper.android.dumper.sofixer.Arch
@@ -33,17 +33,8 @@ fun getArchELF(mFile: FileChannel, memory: MapLineParser): Arch {
     mFile.position(0) //reset pos
 
     return when (byteHeader[4].toInt()) {
-        1 -> {
-            Arch.ARCH_32BIT
-        }
-
-        2 -> {
-            Arch.ARCH_64BIT
-        }
-
-        else -> {
-
-            Arch.UNKNOWN
-        }
+        1 -> Arch.ARCH_32BIT
+        2 -> Arch.ARCH_64BIT
+        else -> Arch.UNKNOWN
     }
 }
