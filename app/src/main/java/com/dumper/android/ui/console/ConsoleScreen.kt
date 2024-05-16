@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
@@ -56,13 +57,15 @@ fun ConsoleScreen(navController: NavController, viewModel: ConsoleViewModel = vi
                 .horizontalScroll(horizontalState)
                 .padding(10.dp)
         ) {
-            Text(
-                text = console,
-                fontSize = 12.sp,
-                fontFamily = FontFamily.Monospace,
-                modifier = Modifier
-                    .padding(8.dp)
-            )
+            SelectionContainer {
+                Text(
+                    text = console,
+                    fontSize = 12.sp,
+                    fontFamily = FontFamily.Monospace,
+                    modifier = Modifier
+                        .padding(8.dp)
+                )
+            }
         }
 
         FloatingActionButton(
