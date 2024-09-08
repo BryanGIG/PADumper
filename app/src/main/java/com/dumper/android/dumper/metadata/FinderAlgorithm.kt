@@ -11,14 +11,16 @@ fun containsPatternWithWildcard(buffer: ByteArray, pattern: String): Boolean {
             }
         }
 
-    outer@ for (i in buffer.indices) {
-        if (patternBytes.size > (buffer.size - i)) return false
+    for (i in buffer.indices) {
+        if (patternBytes.size > (buffer.size - i))
+            return false
 
         for (j in patternBytes.indices) {
             if (patternBytes[j] == null)
                 continue  // Skip wildcard comparison
 
-            if (buffer[i + j] != patternBytes[j]) continue@outer
+            if (buffer[i + j] != patternBytes[j])
+                continue
         }
 
         return true
@@ -43,7 +45,10 @@ fun containsAnyByteArray(byteAllocate: ByteBuffer, byteArray: ByteArray): Boolea
         if (i < 0) {
             return true  // Found
         } else {
-            pos += maxOf(1, badCharSkip[buffer[pos + i].toInt() and 0xFF] - (byteArray.size - 1 - i))
+            pos += maxOf(
+                1,
+                badCharSkip[buffer[pos + i].toInt() and 0xFF] - (byteArray.size - 1 - i)
+            )
         }
     }
     return false

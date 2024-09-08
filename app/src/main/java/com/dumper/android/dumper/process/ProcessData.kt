@@ -11,5 +11,4 @@ data class ProcessData(val processName: String, val appName: String): Parcelable
         else
             appName
     }
-
 }

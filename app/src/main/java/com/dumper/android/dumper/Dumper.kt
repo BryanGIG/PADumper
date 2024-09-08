@@ -9,6 +9,7 @@ import com.dumper.android.dumper.maps.MapLineParser
 import com.dumper.android.dumper.metadata.MetadataFinder
 import com.dumper.android.dumper.process.Process
 import com.dumper.android.dumper.sofixer.Fixer
+import com.dumper.android.utils.Bytes_to_MB
 import com.dumper.android.utils.DEFAULT_DIR
 import com.dumper.android.utils.FileName
 import com.dumper.android.utils.copyToFile
@@ -19,102 +20,96 @@ import java.io.FileNotFoundException
 import java.io.RandomAccessFile
 import java.nio.channels.FileChannel
 
-class Dumper(
-    private val pkg: String,
-    private var file: String,
-    private val isDumpMetadata: Boolean
-) {
+class Dumper(private val context: Context, private val config: DumperConfig, private val outputHandler: OutputHandler) {
     private var pid: Int? = null
 
     /**
      * Dump the memory to a file
-     *
-     * @param ctx pass null if using root, vice versa
-     * @param autoFix if `true` the dumped file will be fixed after dumping
-     * @param outLog output handler
      * @return 0 if success, -1 if failed
      */
     @SuppressLint("SdCardPath")
-    fun dumpFile(ctx: Context, autoFix: Boolean, outLog: OutputHandler) = runCatching {
-        pid = Process.getProcessID(pkg) ?: throw Exception("Process not found!")
+    fun dumpFile(): Int {
+        try {
+            pid = Process.getProcessID(config.processName) ?: throw Exception("Process not found!")
 
         outLog.appendLine("PID: $pid")
         outLog.appendLine("FILE: $file")
 
-        val mem = parseMap() ?: throw Exception("Unable to parse map!")
+            val mem = parseMap() ?: throw Exception("Unable to parse map!")
 
-        outLog.appendLine("Start Address: ${mem.getStartAddress().toHex()}")
-        if (mem.getStartAddress() < 1L) {
-            throw Exception("Invalid Start Address!")
-        }
-
-        outLog.appendLine("End Address: ${mem.getEndAddress().toHex()}")
-        if (mem.getEndAddress() < 1L) {
-            throw Exception("Invalid End Address!")
-        }
-
-        outLog.appendLine("Size Memory: ${mem.getSize().Bytes_to_MB}MB (${mem.getSize()})")
-        if (mem.getSize() < 1L) {
-            throw Exception("Invalid memory size!")
-        }
-
-        val fileOutPath =
-            if (Shell.isAppGrantedRoot() == false) {
-                "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)}/$DEFAULT_DIR/$pkg"
-            } else {
-                "/sdcard/$DEFAULT_DIR/$pkg"
+            outputHandler.appendLine("Start Address: ${mem.getStartAddress().toHex()}")
+            if (mem.getStartAddress() < 1L) {
+                throw Exception("Invalid Start Address!")
             }
 
-        val outputDir = File(fileOutPath)
-        if (!outputDir.exists())
-            outputDir.mkdirs()
+            outputHandler.appendLine("End Address: ${mem.getEndAddress().toHex()}")
+            if (mem.getEndAddress() < 1L) {
+                throw Exception("Invalid End Address!")
+            }
 
-        val outputFile = File(outputDir, "${mem.getStartAddress().toHex()}-${mem.getEndAddress().toHex()}-${mem.getPath().FileName}")
-        if (!outputDir.exists())
-            outputFile.createNewFile()
+            outputHandler.appendLine("Size Memory: ${mem.getSize().Bytes_to_MB}MB (${mem.getSize()})")
+            if (mem.getSize() < 1L) {
+                throw Exception("Invalid memory size!")
+            }
 
-        dump(mem, autoFix, ctx.filesDir.absolutePath, outputFile, outLog)
+            val fileOutPath =
+                if (Shell.isAppGrantedRoot() == false) {
+                    "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)}/$DEFAULT_DIR/${config.processName}"
+                } else {
+                    "/sdcard/$DEFAULT_DIR/${config.processName}"
+                }
 
-        if (isDumpMetadata) {
-            val metadataFinder = MetadataFinder(pid!!)
-            metadataFinder.findUnityMetadata(outLog).let {
-                if (it == null)
-                    outLog.appendError("Unable to find global-metadata.dat")
-                else {
-                    outLog.appendInfo("Dumping global-metadata.dat...")
-                    dump(it, outputFile = File(outputDir, "global-metadata.dat"), outLog = outLog)
+            val outputDir = File(fileOutPath)
+            if (!outputDir.exists())
+                outputDir.mkdirs()
+
+            val outputFile = File(outputDir, "${mem.getStartAddress().toHex()}-${mem.getEndAddress().toHex()}-${mem.getPath().FileName}")
+            if (!outputDir.exists())
+                outputFile.createNewFile()
+
+            dump(mem, context.filesDir.absolutePath, outputFile, outputHandler)
+
+            if (config.isDumpMetadata) {
+                val metadataFinder = MetadataFinder(pid!!)
+                metadataFinder.findUnityMetadata(outputHandler).let {
+                    if (it == null)
+                        outputHandler.appendError("Unable to find global-metadata.dat")
+                    else {
+                        outputHandler.appendInfo("Dumping global-metadata.dat...")
+                        dump(it, outputFile = File(outputDir, "global-metadata.dat"), outLog = outputHandler)
+                    }
                 }
             }
-        }
 
-        outLog.appendLine("Output: $outputDir")
-    }.onSuccess {
-        outLog.appendInfo("Dump Success")
-        outLog.appendLine("==========================")
-        outLog.finish(0)
-    }.onFailure {
-        outLog.appendError(it.stackTraceToString())
-        outLog.appendLine("==========================")
-        outLog.finish(-1)
+            outputHandler.appendLine("Output: $outputDir")
+            outputHandler.appendInfo("Dump Success")
+            outputHandler.appendLine("==========================")
+            outputHandler.finish(0)
+            return 0
+        } catch (e: Throwable) {
+            outputHandler.appendError(e.stackTraceToString())
+            outputHandler.appendLine("==========================")
+            outputHandler.finish(-1)
+            return -1
+        }
     }
 
     private fun dump(
         mem: MapLineParser,
-        autoFix: Boolean = false,
         fixerPath: String? = null,
         outputFile: File,
         outLog: OutputHandler
     ) {
         val channel = RandomAccessFile("/proc/$pid/mem", "r").channel
 
-        if (mem.getSize() > 1000.MB_to_Bytes) {
+        if (mem.getSize() > config.limitMaxDumpSize) {
             outLog.appendWarning("Memory size is too large!, dump maybe incorrect...")
             File("/proc/$pid/map_files").listFiles()
                 ?.find { it.name.contains("${mem.getStartAddress().toHex()}-") }
                 ?.let {
                     it.copyTo(outputFile, true)
                     outLog.appendLine("Dumped size: ${outputFile.length().Bytes_to_MB}MB (${outputFile.length()})")
-                    if (autoFix) {
+                    if (config.autoFix) {
                         fixDump(channel, mem, outputFile, fixerPath, outLog)
                         channel.close()
                     }
@@ -127,7 +122,7 @@ class Dumper(
 
         channel.use {
             it.copyToFile(mem.getStartAddress(), mem.getSize(), outputFile)
-            if (autoFix) {
+            if (config.autoFix) {
                 fixDump(it, mem, outputFile, fixerPath, outLog)
             }
             it.close()
@@ -135,10 +130,13 @@ class Dumper(
     }
 
     private fun fixDump(channel: FileChannel, mem: MapLineParser, outputFile: File, fixerPath: String?, outLog: OutputHandler) {
-        if (fixerPath != null) {
-            val archELF = getArchELF(channel, mem)
-            Fixer(fixerPath).fixELFFile(mem.getStartAddress(), archELF, outputFile, outLog)
+        if (fixerPath == null) {
+            outLog.appendError("Fixer Path is null, skipping...")
+            return
         }
+
+        val archELF = getArchELF(channel, mem)
+        Fixer(fixerPath).fixELFFile(mem.getStartAddress(), archELF, outputFile, outLog)
     }
 
     /**
@@ -160,7 +158,7 @@ class Dumper(
         var map: MapLineParser? = null
 
         files.readLines()
-            .filter { it.contains(file) }
+            .filter { it.contains(config.file) }
             .map { MapLineParser(it) }
             .forEach {
                 if (map == null) {
@@ -184,7 +182,3 @@ class Dumper(
     }
 }
 
-private val Number.MB_to_Bytes: Long
-    get() = this.toLong() * 1024 * 1024L
-private val Number.Bytes_to_MB: Long
-    get() = this.toLong() / 1024 / 1024L

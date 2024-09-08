@@ -4,10 +4,6 @@ import android.Manifest
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.os.Message
-import android.os.Messenger
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -19,18 +15,12 @@ import com.anggrayudi.storage.permission.PermissionCallback
 import com.anggrayudi.storage.permission.PermissionReport
 import com.anggrayudi.storage.permission.PermissionRequest
 import com.anggrayudi.storage.permission.PermissionResult
-import com.dumper.android.core.RootServices.Companion.DUMP_FILE
-import com.dumper.android.core.RootServices.Companion.IS_DUMP_METADATA
-import com.dumper.android.core.RootServices.Companion.IS_FIX_NAME
-import com.dumper.android.core.RootServices.Companion.MSG_DUMP_PROCESS
-import com.dumper.android.core.RootServices.Companion.MSG_GET_PROCESS_LIST
-import com.dumper.android.core.RootServices.Companion.PROCESS_NAME
 import com.dumper.android.dumper.Dumper
+import com.dumper.android.dumper.DumperConfig
 import com.dumper.android.dumper.OutputHandler
 import com.dumper.android.dumper.process.Process
 import com.dumper.android.dumper.sofixer.FixerUtils
-import com.dumper.android.messager.MSGConnection
-import com.dumper.android.messager.MSGReceiver
+import com.dumper.android.messager.AIDLServiceConnection
 import com.dumper.android.ui.MainScreen
 import com.dumper.android.ui.console.ConsoleViewModel
 import com.dumper.android.ui.memory.MemoryViewModel
@@ -41,9 +31,7 @@ import com.topjohnwu.superuser.ipc.RootService
 import kotlin.system.exitProcess
 
 class MainActivity : ComponentActivity() {
-    var remoteMessenger: Messenger? = null
-    private val receiver = Messenger(Handler(Looper.getMainLooper(), MSGReceiver(this)))
-    private lateinit var dumperConnection: MSGConnection
+    var dumperConnection: AIDLServiceConnection? = null
 
     val memory: MemoryViewModel by viewModels()
     val console: ConsoleViewModel by viewModels()
@@ -59,7 +47,11 @@ class MainActivity : ComponentActivity() {
         .withCallback(object : PermissionCallback {
             override fun onPermissionsChecked(result: PermissionResult, fromSystemDialog: Boolean) {
                 val grantStatus = if (result.areAllPermissionsGranted) "granted" else "denied"
-                Toast.makeText(baseContext, "Storage permissions are $grantStatus", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    baseContext,
+                    "Storage permissions are $grantStatus",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
 
             override fun onShouldRedirectToSystemSettings(blockedPermissions: List<PermissionReport>) {
@@ -128,14 +120,8 @@ class MainActivity : ComponentActivity() {
     }
 
     fun sendRequestAllProcess() {
-        if (remoteMessenger != null && Shell.getCachedShell()?.isRoot == true) {
-            val message = Message.obtain(null, MSG_GET_PROCESS_LIST)
-            message.replyTo = receiver
-            remoteMessenger?.send(message)
-        } else {
-            val processList = Process.getAllProcess(this, false)
-            memory.showProcess(this, processList)
-        }
+        val processList = dumperConnection?.getListProcess() ?: Process.getAllProcess(this, false)
+        memory.showProcess(this, processList)
     }
 
     fun sendRequestDump(
@@ -156,28 +142,9 @@ class MainActivity : ComponentActivity() {
 
         console.appendLine("==========================\nProcess : $process")
 
-        if (remoteMessenger != null && Shell.getCachedShell()?.isRoot == true) {
-            val message = Message.obtain(null, MSG_DUMP_PROCESS)
-
-            message.data.apply {
-                putString(PROCESS_NAME, process)
-                putString(DUMP_FILE, dumpFile)
-                if (isDumpGlobalMetadata) {
-                    putBoolean(IS_DUMP_METADATA, true)
-                }
-                if (autoFix) {
-                    putBoolean(IS_FIX_NAME, true)
-                }
-            }
-
-            message.replyTo = receiver
-            remoteMessenger?.send(message)
-        } else {
-            val outHandler = OutputHandler(console)
-
-            Dumper(process, dumpFile, isDumpGlobalMetadata)
-                .dumpFile(this, autoFix, outHandler)
-        }
+        val outHandler = OutputHandler(console)
+        val config = DumperConfig(process, dumpFile, autoFix, isDumpGlobalMetadata)
+        dumperConnection?.dump(config) ?: Dumper(this, config, outHandler).dumpFile()
     }
 
     private fun setupNonRoot(savedInstanceState: Bundle?) {
@@ -196,7 +163,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun setupStoragePermission() {
-        if (Build.VERSION.SDK_INT in Build.VERSION_CODES.M ..Build.VERSION_CODES.P) {
+        if (Build.VERSION.SDK_INT in Build.VERSION_CODES.M..Build.VERSION_CODES.P) {
             permissionRequest.check()
         } else if (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q) {
             storageHelper.requestStorageAccess()
@@ -208,10 +175,9 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun setupRootService() {
-        if (remoteMessenger == null) {
-            dumperConnection = MSGConnection(this)
+        if (dumperConnection == null) {
             val intent = Intent(applicationContext, RootServices::class.java)
-            RootService.bind(intent, dumperConnection)
+            RootService.bind(intent, AIDLServiceConnection(this))
         }
     }
 }

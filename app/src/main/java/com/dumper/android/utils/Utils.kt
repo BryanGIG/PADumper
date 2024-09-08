@@ -38,3 +38,9 @@ fun Context.asMainActivity(): MainActivity? {
     }
     return null
 }
+
+
+val Number.MB_to_Bytes: Long
+    get() = this.toLong() * 1024 * 1024L
+val Number.Bytes_to_MB: Long
+    get() = this.toLong() / 1024 / 1024L

@@ -1,17 +1,16 @@
 package com.dumper.android.dumper
 
-import android.os.Bundle
-import android.os.Message
-import android.os.RemoteException
+import android.os.ParcelFileDescriptor
 import android.util.Log
-import com.dumper.android.core.RootServices
 import com.dumper.android.ui.console.ConsoleViewModel
 import com.dumper.android.utils.TAG
+import java.io.FileOutputStream
+import java.io.OutputStream
 
 class OutputHandler {
     private var isRoot = false
-    private lateinit var from: Message
-    private lateinit var reply: Message
+    private lateinit var parcelFileDescriptor: ParcelFileDescriptor
+    private lateinit var outputStream: OutputStream
     private lateinit var console: ConsoleViewModel
 
     private constructor()
@@ -22,10 +21,10 @@ class OutputHandler {
      * @param from: Message from client
      * @param reply: Message to client
     */
-    constructor(from: Message, reply: Message) : this() {
+    constructor(parcelFileDescriptor: ParcelFileDescriptor) : this() {
         isRoot = true
-        this.from = from
-        this.reply = reply
+        this.parcelFileDescriptor = parcelFileDescriptor
+        outputStream = FileOutputStream(parcelFileDescriptor.fileDescriptor)
     }
 
     /**
@@ -40,14 +39,10 @@ class OutputHandler {
 
     private fun processInput(str: String) {
         if (isRoot) {
-            val data = Bundle()
-            data.putString(RootServices.DUMP_LOG, str)
-            reply.what = RootServices.MSG_DUMP_PROCESS
-            reply.data = data
             try {
-                from.replyTo.send(reply)
-            } catch (e: RemoteException) {
-                Log.e(TAG, "Remote error", e)
+                outputStream.write(str.toByteArray())
+            } catch (e: Exception) {
+                Log.e(TAG, "Error writing to output stream", e)
             }
         } else {
             console.append(str)
@@ -56,14 +51,11 @@ class OutputHandler {
 
     fun finish(code: Int) {
         if (isRoot) {
-            val data = Bundle()
-            data.putInt(RootServices.DUMP_CODE, code)
-            reply.what = RootServices.MSG_DUMP_FINISH
-            reply.data = data
             try {
-                from.replyTo.send(reply)
-            } catch (e: RemoteException) {
-                Log.e(TAG, "Remote error", e)
+                outputStream.close()
+                parcelFileDescriptor.close()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error closing output stream", e)
             }
         } else {
             console.finish(code)
