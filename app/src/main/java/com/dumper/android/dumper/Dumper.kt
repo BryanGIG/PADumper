@@ -32,8 +32,9 @@ class Dumper(private val context: Context, private val config: DumperConfig, pri
         try {
             pid = Process.getProcessID(config.processName) ?: throw Exception("Process not found!")
 
-        outLog.appendLine("PID: $pid")
-        outLog.appendLine("FILE: $file")
+            outputHandler.appendLine("PROCESS: ${config.processName}")
+            outputHandler.appendLine("PID: $pid")
+            outputHandler.appendLine("FILE: ${config.file}")
 
             val mem = parseMap() ?: throw Exception("Unable to parse map!")
 

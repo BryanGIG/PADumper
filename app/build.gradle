@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
+    id 'org.jetbrains.kotlin.plugin.compose'
     id 'kotlin-parcelize'
     id 'org.lsposed.lsplugin.jgit'
 }
@@ -38,7 +39,6 @@ android {
     buildTypes {
         debug {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.debug
         }
         release {
@@ -55,6 +55,7 @@ android {
     }
 
     buildFeatures {
+        aidl true
         buildConfig true
         viewBinding true
         compose true
@@ -63,33 +64,35 @@ android {
     kotlinOptions {
         jvmTarget = '17'
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion "1.5.4"
-    }
+}
+
+composeCompiler {
+    enableStrongSkippingMode = true
+    reportsDestination = layout.buildDirectory.dir("compose_compiler")
 }
 
 dependencies {
     //Ui
-    def composeBom = platform('androidx.compose:compose-bom:2024.05.00')
+    def composeBom = platform("androidx.compose:compose-bom:2024.09.00")
     implementation composeBom
     androidTestImplementation composeBom
 
     implementation 'androidx.compose.material3:material3'
-    implementation 'androidx.compose.material:material-icons-extended:1.6.7'
+    implementation 'androidx.compose.material:material-icons-extended'
 
     // Android Studio Preview support
     implementation 'androidx.compose.ui:ui-tooling-preview'
     debugImplementation 'androidx.compose.ui:ui-tooling'
     // Integration with activities
-    implementation 'androidx.activity:activity-compose:1.9.0'
+    implementation 'androidx.activity:activity-compose:1.9.2'
     // Integration with ViewModels
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0'
-    implementation "androidx.compose.runtime:runtime-livedata:1.6.7"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-compose:2.8.5"
+    implementation "androidx.compose.runtime:runtime-livedata:1.7.0"
     // Integration with Navigation
-    implementation 'androidx.navigation:navigation-compose:2.7.7'
+    implementation "androidx.navigation:navigation-compose:2.8.0"
 
     //Root
-    def libsuVersion = '5.2.2'
+    def libsuVersion = "6.0.0"
     implementation "com.github.topjohnwu.libsu:core:$libsuVersion"
     implementation "com.github.topjohnwu.libsu:service:$libsuVersion"
 
