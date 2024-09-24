@@ -89,7 +89,7 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-viewmodel-compose:2.8.5"
     implementation "androidx.compose.runtime:runtime-livedata:1.7.2"
     // Integration with Navigation
-    implementation "androidx.navigation:navigation-compose:2.8.0"
+    implementation "androidx.navigation:navigation-compose:2.8.1"
 
     //Root
     def libsuVersion = "6.0.0"
