@@ -140,7 +140,7 @@ class MainActivity : ComponentActivity() {
             return
         }
 
-        console.appendLine("==========================\nProcess : $process")
+        console.appendLine("==========================")
 
         val outHandler = OutputHandler(console)
         val config = DumperConfig(process, dumpFile, autoFix, isDumpGlobalMetadata)

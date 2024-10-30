@@ -2,6 +2,7 @@ package com.dumper.android.ui.console
 
 import android.widget.Toast
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,6 +12,7 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
@@ -68,18 +70,29 @@ fun ConsoleScreen(navController: NavController, viewModel: ConsoleViewModel = vi
                 )
             }
         }
-
-        FloatingActionButton(
-            onClick = { viewModel.copyConsole(context) },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(8.dp),
-            elevation = FloatingActionButtonDefaults.elevation(5.dp)
+        Column(
+            modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Icon(
-                Icons.Default.ContentCopy,
-                contentDescription = stringResource(R.string.copy_console)
-            )
+            FloatingActionButton(
+                onClick = { viewModel.clear() },
+                elevation = FloatingActionButtonDefaults.elevation(5.dp)
+            ) {
+                Icon(
+                    Icons.Default.DeleteSweep,
+                    contentDescription = stringResource(R.string.clear_console)
+                )
+            }
+
+            FloatingActionButton(
+                onClick = { viewModel.copyConsole(context) },
+                elevation = FloatingActionButtonDefaults.elevation(5.dp)
+            ) {
+                Icon(
+                    Icons.Default.ContentCopy,
+                    contentDescription = stringResource(R.string.copy_console)
+                )
+            }
         }
     }
 }

@@ -18,7 +18,6 @@ class ConsoleViewModel : ViewModel() {
         clipboard.setPrimaryClip(clip)
         Toast.makeText(context, "Log Copied!", Toast.LENGTH_SHORT).show()
     }
-
     fun append(text: String) {
         console.value += text
     }
