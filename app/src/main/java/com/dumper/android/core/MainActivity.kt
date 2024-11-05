@@ -140,11 +140,19 @@ class MainActivity : ComponentActivity() {
             return
         }
 
-        console.appendLine("==========================")
-
-        val outHandler = OutputHandler(console)
         val config = DumperConfig(process, dumpFile, autoFix, isDumpGlobalMetadata)
-        dumperConnection?.dump(config) ?: Dumper(this, config, outHandler).dumpFile()
+
+        if (dumperConnection != null) {
+            dumperConnection?.dump(config)
+        } else {
+            if (!isStoragePermissionGranted) {
+                setupNonRoot(null)
+                return
+            }
+
+            val outHandler = OutputHandler(console)
+            Dumper(this, config, outHandler).dumpFile()
+        }
     }
 
     private fun setupNonRoot(savedInstanceState: Bundle?) {

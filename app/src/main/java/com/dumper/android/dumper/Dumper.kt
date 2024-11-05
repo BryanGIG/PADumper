@@ -31,7 +31,7 @@ class Dumper(private val context: Context, private val config: DumperConfig, pri
     fun dumpFile(): Int {
         try {
             pid = Process.getProcessID(config.processName) ?: throw Exception("Process not found!")
-
+            outputHandler.appendLine("==========================")
             outputHandler.appendLine("PROCESS: ${config.processName}")
             outputHandler.appendLine("PID: $pid")
             outputHandler.appendLine("FILE: ${config.file}")
