@@ -19,9 +19,7 @@ class SplashActivity : AppCompatActivity() {
             if (Shell.getCachedShell() != null) {
                 Shell.enableVerboseLogging = BuildConfig.DEBUG
                 Shell.setDefaultBuilder(
-                    Shell.Builder.create()
-                        .setFlags(Shell.FLAG_REDIRECT_STDERR)
-                        .setTimeout(10)
+                    Shell.Builder.create().setTimeout(10)
                 )
             }
         }

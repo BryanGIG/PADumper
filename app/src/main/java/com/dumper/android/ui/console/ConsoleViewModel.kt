@@ -12,12 +12,14 @@ class ConsoleViewModel : ViewModel() {
 
     val console = MutableLiveData("")
     val finishCode = MutableLiveData<Event<Int>>()
+
     fun copyConsole(context: Context) {
         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         val clip = ClipData.newPlainText("PADumper-Log", console.value)
         clipboard.setPrimaryClip(clip)
         Toast.makeText(context, "Log Copied!", Toast.LENGTH_SHORT).show()
     }
+
     fun append(text: String) {
         console.value += text
     }

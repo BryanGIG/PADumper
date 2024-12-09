@@ -8,8 +8,21 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import java.io.File
 
+/**
+ * Class responsible for fixing ELF files using SoFixer.
+ *
+ * @property fixerPath The path to the SoFixer executable.
+ */
 class Fixer(private val fixerPath: String) {
 
+    /**
+     * Fix the dumped ELF file.
+     *
+     * @param startAddress The start address of the ELF file.
+     * @param archELF The architecture of the ELF file.
+     * @param outputFile The output file to be fixed.
+     * @param outLog The output handler for logging messages.
+     */
     fun fixELFFile(
         startAddress: Long,
         archELF: Arch,
@@ -32,7 +45,13 @@ class Fixer(private val fixerPath: String) {
     }
 
     /**
-     * Run SoFixer
+     * Run SoFixer to fix the dumped ELF file.
+     *
+     * @param arch The architecture of the ELF file.
+     * @param dumpFile The dumped ELF file to be fixed.
+     * @param startAddress The start address of the ELF file in hexadecimal format.
+     * @param onSuccess Callback function to handle success messages.
+     * @param onError Callback function to handle error messages.
      */
     private fun fixDump(
         arch: Arch,
@@ -49,7 +68,6 @@ class Fixer(private val fixerPath: String) {
                 "0x$startAddress"
             )
         )
-            .redirectErrorStream(true)
             .start()
 
         runBlocking {
