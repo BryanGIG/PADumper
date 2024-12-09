@@ -6,8 +6,10 @@ import java.io.File
 object FixerUtils {
 
     /**
-     * Extract folder assets into filesDir and
-     * set permissions to 777 so the file can be executed
+     * Extracts folder assets into the application's files directory and
+     * sets permissions to 777 so the files can be executed.
+     *
+     * @param ctx The application context.
      */
     fun extractLibs(ctx: Context) {
         val filesDir = ctx.filesDir

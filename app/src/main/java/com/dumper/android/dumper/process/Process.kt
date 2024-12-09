@@ -12,13 +12,25 @@ import java.io.File
 
 object Process {
 
+    /**
+     * Get all processes running on the device.
+     *
+     * @param ctx The application context.
+     * @param isRoot Boolean indicating if the device is rooted.
+     * @return List of ProcessData containing process information.
+     */
     fun getAllProcess(ctx: Context, isRoot: Boolean) =
         if (isRoot)
             getAllProcessRoot(ctx)
         else
             getAllProcessNoRoot()
 
-
+    /**
+     * Get all processes running on a rooted device.
+     *
+     * @param ctx The application context.
+     * @return List of ProcessData containing process information.
+     */
     private fun getAllProcessRoot(ctx: Context): List<ProcessData> {
         val activityManager = ctx.getSystemService(ACTIVITY_SERVICE) as ActivityManager
         return activityManager.runningAppProcesses
@@ -36,6 +48,11 @@ object Process {
             }
     }
 
+    /**
+     * Get all processes running on a non-rooted device.
+     *
+     * @return List of ProcessData containing process information.
+     */
     private fun getAllProcessNoRoot(): List<ProcessData> {
         return File("/proc")
             .listFiles().orEmpty()
@@ -58,8 +75,10 @@ object Process {
     }
 
     /**
-     * Get the PID
-     * @return pid of process or null if process id is not found
+     * Get the PID of a process by its package name.
+     *
+     * @param pkg The package name of the process.
+     * @return The PID of the process or null if not found.
      */
     fun getProcessID(pkg: String): Int? {
         return File("/proc")
