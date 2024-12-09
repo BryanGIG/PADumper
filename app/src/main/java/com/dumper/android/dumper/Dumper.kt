@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Environment
 import com.dumper.android.dumper.elf.getArchELF
 import com.dumper.android.dumper.elf.isELF
+import com.dumper.android.dumper.exception.DumperException
 import com.dumper.android.dumper.maps.MapLineParser
 import com.dumper.android.dumper.metadata.MetadataFinder
 import com.dumper.android.dumper.process.Process
@@ -37,7 +38,7 @@ class Dumper(private val context: Context, private val config: DumperConfig, pri
     @SuppressLint("SdCardPath")
     fun dumpFile(): Int {
         try {
-            pid = Process.getProcessID(config.processName) ?: throw Exception("Process not found!")
+            pid = Process.getProcessID(config.processName) ?: throw DumperException("Process not found!")
             outputHandler.appendLine("==========================")
             outputHandler.appendLine("PROCESS: ${config.processName}")
             outputHandler.appendLine("PID: $pid")
@@ -47,17 +48,17 @@ class Dumper(private val context: Context, private val config: DumperConfig, pri
 
             outputHandler.appendLine("Start Address: ${mem.getStartAddress().toHex()}")
             if (mem.getStartAddress() < 1L) {
-                throw Exception("Invalid Start Address!")
+                throw DumperException("Invalid start address!")
             }
 
             outputHandler.appendLine("End Address: ${mem.getEndAddress().toHex()}")
             if (mem.getEndAddress() < 1L) {
-                throw Exception("Invalid End Address!")
+                throw DumperException("Invalid end address!")
             }
 
             outputHandler.appendLine("Size Memory: ${mem.getSize().Bytes_to_MB}MB (${mem.getSize()})")
             if (mem.getSize() < 1L) {
-                throw Exception("Invalid memory size!")
+                throw DumperException("Invalid memory size!")
             }
 
             val fileOutPath =
@@ -95,7 +96,11 @@ class Dumper(private val context: Context, private val config: DumperConfig, pri
             outputHandler.finish(0)
             return 0
         } catch (e: Throwable) {
-            outputHandler.appendError(e.stackTraceToString())
+            if (e is DumperException) {
+                outputHandler.appendError(e.message ?: "Unknown Error")
+            } else {
+                outputHandler.appendError(e.stackTraceToString())
+            }
             outputHandler.appendLine("==========================")
             outputHandler.finish(-1)
             return -1
@@ -151,7 +156,7 @@ class Dumper(private val context: Context, private val config: DumperConfig, pri
      */
     private fun fixDump(channel: FileChannel, mem: MapLineParser, outputFile: File, fixerPath: String?, outLog: OutputHandler) {
         if (fixerPath == null) {
-            outLog.appendError("Fixer Path is null, skipping...")
+            outLog.appendError("Fixer path is null, skipping...")
             return
         }
 
@@ -168,12 +173,12 @@ class Dumper(private val context: Context, private val config: DumperConfig, pri
      */
     private fun parseMap(): MapLineParser {
         if (pid == null) {
-            throw ExceptionInInitializerError("Init Pid?")
+            throw DumperException("Please made sure you already run your process!")
         }
 
         val files = File("/proc/$pid/maps")
         if (!files.exists()) {
-            throw FileNotFoundException("Failed To Open : ${files.path}")
+            throw DumperException("Failed to open : ${files.path}")
         }
 
         val parsedMaps = files.readLines()
@@ -182,7 +187,7 @@ class Dumper(private val context: Context, private val config: DumperConfig, pri
 
         val map = findCorrectFiles(parsedMaps = parsedMaps)
         if (map == null || !map.isValid())
-            throw Exception("Start or End Address not found!")
+            throw DumperException("start or end address not found!")
 
         return map
     }

@@ -1,5 +1,6 @@
 package com.dumper.android.dumper.maps
 
+import com.dumper.android.dumper.exception.DumperException
 import com.dumper.android.utils.toHex
 
 class MapLineParser(line: String) {
@@ -12,7 +13,7 @@ class MapLineParser(line: String) {
                 0 -> {
                     val lineAddrs = s.split("-")
                     if (lineAddrs.size < 2)
-                        throw Exception("Invalid maps line parsing...")
+                        throw DumperException("Invalid maps line parsing...")
 
                     memoryRegion.startAddress = lineAddrs[0].toLong(16)
                     memoryRegion.endAddress = lineAddrs[1].toLong(16)
