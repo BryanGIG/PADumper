@@ -1,6 +1,6 @@
 package com.dumper.android.ui
 
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -16,6 +16,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -46,7 +47,7 @@ fun MainScreen(memory: MemoryViewModel = viewModel(), console: ConsoleViewModel 
                 },
                 actions = {
                     IconButton(
-                        modifier = Modifier.fillMaxHeight(),
+                        modifier = Modifier.heightIn(min = 24.dp, max = 32.dp),
                         onClick = { context.openGithubPage() }) {
                         Icon(
                             painter = painterResource(R.drawable.github_mark),
