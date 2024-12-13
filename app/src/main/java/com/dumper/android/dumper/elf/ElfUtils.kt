@@ -39,15 +39,11 @@ fun getArchELF(mFile: FileChannel, memory: MapLineParser): Arch {
 
     mFile.read(byteHeader, memory.getStartAddress())
 
+    // Check if the header is an ELF header
     for (i in 0 until 4) {
         if (byteHeader[i] != hElf[i]) {
             return Arch.UNKNOWN
         }
-    }
-    if (byteHeader[0] != hElf[0] || byteHeader[1] != hElf[1] ||
-        byteHeader[2] != hElf[2] || byteHeader[3] != hElf[3]
-    ) {
-        return Arch.UNKNOWN
     }
 
     mFile.position(0) //reset pos
