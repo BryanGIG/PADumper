@@ -74,7 +74,7 @@ composeCompiler {
 dependencies {
 
     //Ui
-    def composeBom = platform("androidx.compose:compose-bom:2024.11.00")
+    def composeBom = platform("androidx.compose:compose-bom:2024.12.01")
     implementation composeBom
     androidTestImplementation composeBom
 
