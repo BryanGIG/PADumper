@@ -85,13 +85,13 @@ class Dumper(private val context: Context, private val config: DumperConfig, pri
                         outputHandler.appendError("Unable to find global-metadata.dat")
                     else {
                         outputHandler.appendInfo("Dumping global-metadata.dat...")
+                        config.autoFix = false
                         dump(it, outputFile = File(outputDir, "global-metadata.dat"), outLog = outputHandler)
                     }
                 }
             }
 
-            outputHandler.appendLine("Output: $outputDir")
-            outputHandler.appendInfo("Dump Success")
+            outputHandler.appendSuccess("Output: $outputDir")
             outputHandler.appendLine("==========================")
             outputHandler.finish(0)
             return 0
@@ -123,7 +123,7 @@ class Dumper(private val context: Context, private val config: DumperConfig, pri
     ) {
         val channel = RandomAccessFile("/proc/$pid/mem", "r").channel
 
-        /* Im considering bring use approach but haven't test it yet, so i will leave it commented
+        /* Im considering use this approach but haven't test it yet, so i will leave it commented
 
         File("/proc/$pid/map_files").listFiles()
             ?.find { it.name.contains("${mem.getStartAddress().toHex()}-") }
