@@ -32,17 +32,26 @@ class SplashActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        if (!sharedPreferences.getBoolean(IGNORE_KSU, false)) {
-            runCatching {
-                val launcher = packageManager.getLaunchIntentForPackage("me.weishu.kernelsu")
-                if (launcher != null) {
-                    requestKSUPermission(launcher)
-                    return
+        Shell.getShell { shell ->
+            if (!shell.isRoot) {
+                if (!sharedPreferences.getBoolean(IGNORE_KSU, false)) {
+                    runCatching {
+                        val launcher = packageManager.getLaunchIntentForPackage("me.weishu.kernelsu")
+                        if (launcher != null) {
+                            requestKSUPermission(launcher)
+                            return@getShell
+                        }
+                    }
                 }
             }
+            val methodStr = if (shell.isRoot) {
+                "Root"
+            } else {
+                "Non Root"
+            }
+            Toast.makeText(applicationContext, "Using $methodStr method", Toast.LENGTH_SHORT).show()
+            launchActivity()
         }
-
-        initShell()
     }
 
     private fun requestKSUPermission(launcher: Intent) {
@@ -60,23 +69,13 @@ class SplashActivity : AppCompatActivity() {
                 sharedPreferences.edit(commit = true) {
                     putBoolean(IGNORE_KSU, true)
                 }
-                initShell()
             }
             .setOnCancelListener {
                 sharedPreferences.edit(commit = true) {
                     putBoolean(IGNORE_KSU, true)
                 }
-                initShell()
             }
             .show()
-    }
-
-    private fun initShell() {
-        Shell.getShell { shell ->
-            val methodStr = if (shell.isRoot) "root" else "non-root"
-            Toast.makeText(applicationContext, "Using $methodStr method", Toast.LENGTH_SHORT).show()
-            launchActivity()
-        }
     }
 
     private fun launchActivity() {
