@@ -10,15 +10,15 @@ var repo = jgit.repo(true)
 var commitCount = (repo?.commitCount("refs/remotes/origin/master") ?: 1)
 
 android {
-    compileSdk 34
+    compileSdk 35
     namespace "com.dumper.android"
 
     defaultConfig {
         applicationId  "com.dumper.android"
         minSdk 21
-        targetSdk 34
+        targetSdk 35
         versionCode commitCount
-        versionName "1.0.3"
+        versionName "1.1.0"
     }
 
     signingConfigs {
