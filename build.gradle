@@ -6,7 +6,7 @@ buildscript {
         maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
     }
     dependencies {
-        classpath "com.android.tools.build:gradle:8.7.3"
+        classpath "com.android.tools.build:gradle:8.9.2"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.10"
         classpath "org.jetbrains.kotlin:compose-compiler-gradle-plugin:2.1.10"
         classpath "org.lsposed.lsplugin:jgit:1.1"
