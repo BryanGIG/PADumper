@@ -100,5 +100,5 @@ dependencies {
     implementation "com.github.topjohnwu.libsu:service:$libsuVersion"
 
     //Storage Helper
-    implementation "com.anggrayudi:storage:2.1.0"
+    implementation "com.anggrayudi:storage:2.2.0"
 }
